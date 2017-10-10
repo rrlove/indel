@@ -1,0 +1,17 @@
+##code for generating test files:
+
+##test.vcf
+zgrep '#' samples47_indels.Aug29.exons.vcf.gz > ~/Desktop/Indels/code/indel/test/test.vcf
+zgrep -v '#' samples47_indels.Aug29.exons.vcf.gz | awk '{if ($1 ~ '3L') print}' | head -n 20 >> ~/Desktop/Indels/code/indel/test/test.vcf
+
+##test.h5
+bgzip test.vcf
+tabix -p vcf test.vcf.gz
+
+vcf2npy --vcf test.vcf.gz --fasta ../../../AG1K_indels/reference/Anopheles-gambiae-PEST_CHROMOSOMES_AgamP3.fa --array-type variants --chromosome 3L --arity ALT:10 --arity AF:10 --arity AC:10 --arity MLEAF:10 --arity MLEAC:10 --arity ANN:1 --dtype REF:S100 --dtype ALT:S100 --exclude-field ID
+vcf2npy --vcf test.vcf.gz --fasta ../../../AG1K_indels/reference/Anopheles-gambiae-PEST_CHROMOSOMES_AgamP3.fa --array-type calldata_2d --chromosome 3L --arity AD:10 --exclude-field is_phased --exclude-field GT --exclude-field AB --exclude-field MQ0 --exclude-field PL
+vcfnpy2hdf5 --vcf test.vcf.gz --input-dir test.vcf.gz.vcfnp_cache --input-filename-template {array_type}.3L.npy --output test.h5 --group 3L --chunk-size 131072 --chunk-width 10 --compression gzip --compression-opts 3
+
+##test.gff3
+grep -E "##[a-z]" Anopheles-gambiae-PEST_BASEFEATURES_AgamP4.5.gff3 > ~/Desktop/Indels/code/indel/test/test.gff3
+grep -v '#' Anopheles-gambiae-PEST_BASEFEATURES_AgamP4.5.gff3 | grep 'CDS' | awk '{if ($1 ~ "3L") print}' | head -n 50 >> ~/Desktop/Indels/code/indel/test/test.gff3
