@@ -2,7 +2,7 @@
 
 ##test.vcf
 zgrep '#' samples47_indels.Aug29.exons.vcf.gz > ~/Desktop/Indels/code/indel/test/test.vcf
-zgrep -v '#' samples47_indels.Aug29.exons.vcf.gz | awk '{if ($1 ~ '3L') print}' | head -n 20 >> ~/Desktop/Indels/code/indel/test/test.vcf
+zgrep -v '#' samples47_indels.Aug29.exons.vcf.gz | awk '{if ($1 ~ '3L') print}' | head -n 200 | tail -n 15 >> ~/Desktop/Indels/code/indel/test/test.vcf
 
 ##test.h5
 bgzip test.vcf
@@ -12,6 +12,24 @@ vcf2npy --vcf test.vcf.gz --fasta ../../../AG1K_indels/reference/Anopheles-gambi
 vcf2npy --vcf test.vcf.gz --fasta ../../../AG1K_indels/reference/Anopheles-gambiae-PEST_CHROMOSOMES_AgamP3.fa --array-type calldata_2d --chromosome 3L --arity AD:10 --exclude-field is_phased --exclude-field GT --exclude-field AB --exclude-field MQ0 --exclude-field PL
 vcfnpy2hdf5 --vcf test.vcf.gz --input-dir test.vcf.gz.vcfnp_cache --input-filename-template {array_type}.3L.npy --output test.h5 --group 3L --chunk-size 131072 --chunk-width 10 --compression gzip --compression-opts 3
 
+##badtest.vcf
+zgrep '#' samples47_indels.Aug29.exons.vcf.gz > ~/Desktop/Indels/code/indel/test/badtest.vcf
+zgrep -v '#' samples47_indels.Aug29.exons.vcf.gz | awk '{if ($1 ~ '3L') print}' | head -n 200 | tail -n 15 >> ~/Desktop/Indels/code/indel/test/badtest.vcf
+zgrep -v '#' samples47_indels.Aug29.exons.vcf.gz | awk '{if ($1 ~ '2L') print}' | head -n 200 | tail -n 15 >> ~/Desktop/Indels/code/indel/test/badtest.vcf
+
+##badtest.h5
+bgzip badtest.vcf
+tabix -p vcf badtest.vcf.gz
+
+for chrom in "3L" "2L"; do
+vcf2npy --vcf badtest.vcf.gz --fasta ../../../AG1K_indels/reference/Anopheles-gambiae-PEST_CHROMOSOMES_AgamP3.fa --array-type variants --chromosome ${chrom} --arity ALT:10 --arity AF:10 --arity AC:10 --arity MLEAF:10 --arity MLEAC:10 --arity ANN:1 --dtype REF:S100 --dtype ALT:S100 --exclude-field ID ;
+vcf2npy --vcf badtest.vcf.gz --fasta ../../../AG1K_indels/reference/Anopheles-gambiae-PEST_CHROMOSOMES_AgamP3.fa --array-type calldata_2d --chromosome ${chrom} --arity AD:10 --exclude-field is_phased --exclude-field GT --exclude-field AB --exclude-field MQ0 --exclude-field PL ;
+done
+
+for chrom in "3L" "2L"; do
+vcfnpy2hdf5 --vcf badtest.vcf.gz --input-dir badtest.vcf.gz.vcfnp_cache --input-filename-template {array_type}.${chrom}.npy --output badtest.h5 --group ${chrom} --chunk-size 131072 --chunk-width 10 --compression gzip --compression-opts 3 ;
+done
+
 ##test.gff3
 grep -E "##[a-z]" Anopheles-gambiae-PEST_BASEFEATURES_AgamP4.5.gff3 > ~/Desktop/Indels/code/indel/test/test.gff3
-grep -v '#' Anopheles-gambiae-PEST_BASEFEATURES_AgamP4.5.gff3 | grep 'CDS' | awk '{if ($1 ~ "3L") print}' | head -n 50 >> ~/Desktop/Indels/code/indel/test/test.gff3
+grep -v '#' Anopheles-gambiae-PEST_BASEFEATURES_AgamP4.5.gff3 | grep 'CDS' | awk '{if ($1 ~ "3L") print}' | head -n 500 | tail -n 10 >> ~/Desktop/Indels/code/indel/test/test.gff3
