@@ -148,15 +148,27 @@ class ChromTestCase(unittest.TestCase):
             
         def test_filter_on_parents(self):
             
+            self.chrom.extract_exonic()
+            self.chrom.filter_GQ_MQ_QD()
             self.chrom.filter_on_parents()
             
             self.assertEqual(self.chrom.gt_filtered.shape, (3, 6, 2))
             self.assertEqual(self.chrom.vt_filtered.shape, (3, ))
             
-            expected_genos = [[[0, 1], [0, 1], [0, 1], [1, 1], [0, 1], [0, 0]],
+            expected_parental_filter_genos = [[[0, 1], [0, 1], [0, 1], [1, 1], [0, 1], [0, 0]],
                                       [[0, 0], [1, 1], [0, 1], [0, 1], [0, 1], [0, 1]],
                                       [[0, 1], [1, 1], [0, 0], [1, 1], [1, 1], [1, 1]]]
             
-            npt.assert_array_equal(expected_genos, self.chrom.gt_filtered)
-                        
+            npt.assert_array_equal(expected_parental_filter_genos, self.chrom.gt_filtered)
+            
+        def test_autosomal_Mendelian_filtering(self):
+            
+            self.chrom.extract_exonic()
+            self.chrom.filter_GQ_MQ_QD()
+            self.chrom.filter_on_parents()
+            self.chrom.ID_autosomal_Mendelian_violations()
+            
+            expected_autosomal_violations = [0, 0, 1]
+            npt.assert_equal(expected_autosomal_violations, self.chrom.site_violations)
+                                    
             
