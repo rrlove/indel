@@ -108,7 +108,26 @@ class ChromTestCase(unittest.TestCase):
             self.chrom.metadata = pd.DataFrame({'samples': sample_names, 'role': sample_roles, 'sex': sample_sexes})
             
             self.chrom.ID_positions(self.test_feature_table[self.test_feature_table["type"] == b"CDS"])
-                
+        
+        def test_check_metadata_parental(self):
+            
+            ##make some ill-formatted metadata and attach it to another mock chromosome
+            bad_names = pd.Series(["A","B","C","D"])
+            bad_roles_1 = pd.Series(["parent","progeny","progeny","progeny"])
+            bad_roles_2 = pd.Series(["progeny","parent","progeny","progeny"])
+            bad_roles_3 = pd.Series(["parent","parent","parent","parent"])
+            
+            self.md_test_chrom = Chrom("3L","fake_path")
+            
+            self.md_test_chrom.metadata = pd.DataFrame({'samples': bad_names, 'role': bad_roles_1})
+            self.assertRaises(AssertionError, self.md_test_chrom.check_metadata_parental)
+            
+            self.md_test_chrom.metadata = pd.DataFrame({'samples': bad_names, 'role': bad_roles_2})
+            self.assertRaises(AssertionError, self.md_test_chrom.check_metadata_parental)
+            
+            self.md_test_chrom.metadata = pd.DataFrame({'samples': bad_names, 'role': bad_roles_3})
+            self.assertRaises(AssertionError, self.md_test_chrom.check_metadata_parental)            
+        
         def test_ID_positions_right_type(self):
             
             self.assertEqual(type(self.chrom.allPositions), allel.model.ndarray.SortedIndex)
@@ -170,5 +189,5 @@ class ChromTestCase(unittest.TestCase):
             
             expected_autosomal_violations = [0, 0, 1]
             npt.assert_equal(expected_autosomal_violations, self.chrom.site_violations)
-                                    
+                                                
             
