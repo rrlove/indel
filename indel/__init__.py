@@ -1,3 +1,3 @@
 from .methods import *
-from .objects import *
+from .Chrom import *
 import allel

@@ -1,3 +1,8 @@
+import allel
+import h5py
+import numpy as np
+import pandas as pd
+
 class Chrom():
     
     def __init__(self,name,path_to_hdf5):
@@ -105,6 +110,46 @@ class Chrom():
         self.check_metadata_parental()
         
         ##now that we've checked that, actually find the violations
-        self.gt_violations = allel.mendel_errors(self.gt_filtered[:,:2],self.gt_filtered[:,2:])
-        self.site_violations = np.sum(self.gt_violations, axis=1) 
+        self.auto_gt_violations = allel.mendel_errors(self.gt_filtered[:,:2],self.gt_filtered[:,2:])
+        self.auto_site_violations = np.sum(self.auto_gt_violations, axis=1) 
 
+    def filter_heterozygous_heterogametes(self,heterogametic,error_tolerance=0):
+        
+        '''This method should only be run on the sex chromosome. It is part of the filtering
+        process with ID_Mendelian_violations_sex. 
+        
+        Because the heterogametic sex only has one
+        copy of each sex chromosome, any heterozygous genotypes on the sex chromosome must be
+        sequencing errors (in this representation, the genotype is "doubled" on the sex 
+        chromosome for the heterogametic sex.)
+        
+        This method takes a list of heterozygous samples and returns filtered genotypes and 
+        variant tables where sites with more errors than the threshold have been removed. By
+        default, the threshold is 0. I strongly discourage changing this threshold, especially
+        without specifically filtering out errors in the heterogametic PARENT. Omitting that
+        could throw off the identification of Mendelian violations on that chromosome.
+        
+        By using this method together with ID_Mendelian_violations_sex, you should be able to 
+        check every sample on the sex chromosome, whether heterogametic or not.'''
+        
+        self.het_errors = np.sum(self.gt_filtered[:,heterogametic].is_het(), axis=1)
+        self.het_errors_bool = self.het_errors <= error_tolerance
+        
+        self.gt_het_error_filtered = self.gt_filtered.subset(sel0=self.het_errors_bool)
+        self.vt_het_error_filtered = self.vt_filtered[self.het_errors_bool]
+    
+    def ID_Mendelian_violations_sex(self,parents_homo_progeny): 
+        '''parents_homo_progeny is an array holding the indices of the parental samples plus the samples 
+        homogametic for the sex chromosome (in the case of Anopheles, females)
+        heterogametic is an array holding the indices of all heterogametic samples
+        '''
+        ##parental samples have to be together at the beginning of the array, so check
+        self.check_metadata_parental()
+        
+        ##to force running filter_heterozygous_heterogametes first, use those output objects as input
+        
+        self.no_het_progeny = self.gt_het_error_filtered.subset(sel1=parents_homo_progeny)
+        
+        self.sex_gt_violations = allel.mendel_errors(self.no_het_progeny[:,:2],self.no_het_progeny[:,2:])
+        
+        self.sex_site_violations = np.sum(self.sex_gt_violations, axis=1)

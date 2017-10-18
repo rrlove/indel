@@ -4,6 +4,7 @@ import allel
 import indel
 import numpy as np
 import numpy.testing as npt
+import pandas as pd
 import unittest
 
 
@@ -71,7 +72,7 @@ class ChromTestCase(unittest.TestCase):
             
             callset = {"2L": {"variants": vt, "calldata/genotype": gt, "calldata/GQ": gq}}
             
-            self.chrom = Chrom("2L",'fake_path')
+            self.chrom = indel.Chrom("2L",'fake_path')
             self.chrom.callset = callset
             
             ##mock feature table
@@ -111,22 +112,20 @@ class ChromTestCase(unittest.TestCase):
         
         def test_check_metadata_parental(self):
             
-            ##make some ill-formatted metadata and attach it to another mock chromosome
+            ##make some ill-formatted metadata and replace the real metadata with it
             bad_names = pd.Series(["A","B","C","D"])
             bad_roles_1 = pd.Series(["parent","progeny","progeny","progeny"])
             bad_roles_2 = pd.Series(["progeny","parent","progeny","progeny"])
             bad_roles_3 = pd.Series(["parent","parent","parent","parent"])
             
-            self.md_test_chrom = Chrom("3L","fake_path")
+            self.chrom.metadata = pd.DataFrame({'samples': bad_names, 'role': bad_roles_1})
+            self.assertRaises(AssertionError, self.chrom.check_metadata_parental)
             
-            self.md_test_chrom.metadata = pd.DataFrame({'samples': bad_names, 'role': bad_roles_1})
-            self.assertRaises(AssertionError, self.md_test_chrom.check_metadata_parental)
+            self.chrom.metadata = pd.DataFrame({'samples': bad_names, 'role': bad_roles_2})
+            self.assertRaises(AssertionError, self.chrom.check_metadata_parental)
             
-            self.md_test_chrom.metadata = pd.DataFrame({'samples': bad_names, 'role': bad_roles_2})
-            self.assertRaises(AssertionError, self.md_test_chrom.check_metadata_parental)
-            
-            self.md_test_chrom.metadata = pd.DataFrame({'samples': bad_names, 'role': bad_roles_3})
-            self.assertRaises(AssertionError, self.md_test_chrom.check_metadata_parental)            
+            self.chrom.metadata = pd.DataFrame({'samples': bad_names, 'role': bad_roles_3})
+            self.assertRaises(AssertionError, self.chrom.check_metadata_parental)            
         
         def test_ID_positions_right_type(self):
             
@@ -188,6 +187,59 @@ class ChromTestCase(unittest.TestCase):
             self.chrom.ID_autosomal_Mendelian_violations()
             
             expected_autosomal_violations = [0, 0, 1]
-            npt.assert_equal(expected_autosomal_violations, self.chrom.site_violations)
-                                                
+            npt.assert_equal(expected_autosomal_violations, self.chrom.auto_site_violations)
             
+        def test_filter_heterozygous_heterogametes(self):
+            
+            ##I reuse the original mock genotypes and variant filters and "pretend" 2L is a sex chromosome
+            self.chrom.gt_filtered = self.chrom.callset[self.chrom.name]["calldata/genotype"]
+            self.chrom.vt_filtered = self.chrom.callset[self.chrom.name]["variants"]
+            
+            heterogametic = [2,3]
+            self.chrom.filter_heterozygous_heterogametes(heterogametic)
+            
+            expected_gt_output = [[[1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1]],
+                                  [[0, 1], [1, 1], [0, 0], [1, 1], [1, 1], [1, 1]],
+                                  [[-1, -1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1]]]
+            
+            expected_vt_shape = (3,)
+            
+            self.assertEqual(expected_vt_shape, self.chrom.vt_het_error_filtered.shape)
+            npt.assert_array_equal(expected_gt_output, self.chrom.gt_het_error_filtered)
+         
+        def test_sex_Mendelian_filtering(self):
+            
+            self.chrom.gt_het_error_filtered = \
+            allel.GenotypeArray([
+                                [[0, 0], [1, 1], [0, 1], [0, 1], [0, 1], [0, 1]],
+                                [[0, 0], [1, 1], [0, 1], [1, 1], [0, 1], [1, 1]],
+                                [[1, 1], [0, 0], [1, 1], [1, 1], [1, 1], [1, 1]],
+                                [[0, 0], [1, 1], [0, 0], [0, 1], [1, 1], [0, 1]],
+                                     ],dtype='i1')
+            
+            parents_homo_progeny = [0,1,4,5]
+        
+            expected_gt_violations = [[0,0],[0,1],[1,1],[1,0]]
+            
+            self.chrom.ID_Mendelian_violations_sex(parents_homo_progeny)
+            
+            npt.assert_array_equal(expected_gt_violations, self.chrom.sex_gt_violations)
+            
+            expected_site_violations = [0,1,2,1]
+            
+            npt.assert_array_equal(expected_site_violations, self.chrom.sex_site_violations)
+                
+        @unittest.expectedFailure
+        def test_setup(self):
+            
+            print(self.md_test_chrom)
+            
+        @unittest.expectedFailure            
+        def test_use_of_npt(self):
+            
+            test_array_1 = [[5,6],[6,5]]
+            test_array_2 = [[5,6],[6,6]]
+            npt.assert_array_equal(test_array_1,test_array_2)
+                        
+if __name__ =='__main__':
+	unittest.main()
