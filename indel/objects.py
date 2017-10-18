@@ -106,6 +106,5 @@ class Chrom():
         
         ##now that we've checked that, actually find the violations
         self.gt_violations = allel.mendel_errors(self.gt_filtered[:,:2],self.gt_filtered[:,2:])
-        self.site_violations = np.sum(self.gt_violations, axis=1)
-    
-        
+        self.site_violations = np.sum(self.gt_violations, axis=1) 
+
