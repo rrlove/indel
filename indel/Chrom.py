@@ -21,12 +21,15 @@ class Chrom():
     def check_metadata_parental(self):
         ##for any task requiring parental samples to be at the beginning of the array
         
-        assert self.metadata["role"][0] == "parent", "non-parental sample at beginning, index 0"
-        assert self.metadata["role"][1] == "parent", "non-parental sample at beginning, index 1"
+        assert self.metadata["role"][0] == \
+        "parent", "non-parental sample at beginning, index 0"
+        assert self.metadata["role"][1] == \
+        "parent", "non-parental sample at beginning, index 1"
         
         for i in range(2,len(self.metadata)):
             
-            assert self.metadata["role"][i] == "progeny", "non-progeny sample with index " + str(i)
+            assert self.metadata["role"][i] == \
+            "progeny", "non-progeny sample with index " + str(i)
         
     def ID_positions(self,feature_table):
         
@@ -110,9 +113,10 @@ class Chrom():
         self.check_metadata_parental()
         
         ##now that we've checked that, actually find the violations
-        self.auto_gt_violations = allel.mendel_errors(self.gt_filtered[:,:2],self.gt_filtered[:,2:])
+        self.auto_gt_violations = \
+        allel.mendel_errors(self.gt_filtered[:,:2],self.gt_filtered[:,2:])
         self.auto_site_violations = np.sum(self.auto_gt_violations, axis=1) 
-
+        
     def filter_heterozygous_heterogametes(self,heterogametic,error_tolerance=0):
         
         '''This method should only be run on the sex chromosome. It is part of the filtering
@@ -139,8 +143,8 @@ class Chrom():
         self.vt_het_error_filtered = self.vt_filtered[self.het_errors_bool]
     
     def ID_Mendelian_violations_sex(self,parents_homo_progeny): 
-        '''parents_homo_progeny is an array holding the indices of the parental samples plus the samples 
-        homogametic for the sex chromosome (in the case of Anopheles, females)
+        '''parents_homo_progeny is an array holding the indices of the parental samples plus 
+        the samples homogametic for the sex chromosome (in the case of Anopheles, females)
         heterogametic is an array holding the indices of all heterogametic samples
         '''
         ##parental samples have to be together at the beginning of the array, so check
@@ -150,6 +154,39 @@ class Chrom():
         
         self.no_het_progeny = self.gt_het_error_filtered.subset(sel1=parents_homo_progeny)
         
-        self.sex_gt_violations = allel.mendel_errors(self.no_het_progeny[:,:2],self.no_het_progeny[:,2:])
+        self.sex_gt_violations = \
+        allel.mendel_errors(self.no_het_progeny[:,:2],self.no_het_progeny[:,2:])
         
         self.sex_site_violations = np.sum(self.sex_gt_violations, axis=1)
+        
+    def remove_Mendelian_violations(self,permitted_violations=0,sex=False):
+        
+        if sex is True:
+            
+            self.Mendel_bool = self.sex_site_violations <= permitted_violations
+            self.vt_Mendel_filtered = self.vt_het_error_filtered[self.Mendel_bool]
+            self.gt_Mendel_filtered = self.gt_het_error_filtered.subset(sel0=self.Mendel_bool)
+            
+        elif sex is False:
+            
+            self.Mendel_bool = self.auto_site_violations <= permitted_violations
+            self.vt_Mendel_filtered = self.vt_filtered[self.Mendel_bool]
+            self.gt_Mendel_filtered = self.gt_filtered.subset(sel0=self.Mendel_bool)
+    
+    def phase_and_filter(self,permitted_nonphased=0,window=25):
+        
+        self.check_metadata_parental()
+        
+        self.phased = allel.phase_by_transmission(self.gt_Mendel_filtered, window_size=window)
+        assert self.num_present == self.gt_Mendel_filtered.shape[1], \
+        "You have a different number of samples from when you started!"
+        
+        self.phased_Bool = np.sum(self.phased.is_phased, axis=1) >= \
+        (self.num_present - permitted_nonphased)
+        
+        self.phased_genos = self.phased.subset(sel0=self.phased_Bool)
+        self.unphased_genos_at_phased_site = \
+        self.gt_Mendel_filtered.subset(sel0=self.phased_Bool)
+        self.vt_phased = self.vt_Mendel_filtered[self.phased_Bool]
+
+    
