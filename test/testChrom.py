@@ -49,15 +49,15 @@ class ChromTestCase(unittest.TestCase):
             ##default min QD 15
             ##default min MQ 40
             ##variants filtered out:1 (GQ), 2 (QD), 3 (non-CDS), 4 (non-seg), 5 (MQ), 8 (Mendelian error), 9 (missing parent)
-            records = [[b'2L', 20,'A','ATC',15, 35.7, 45, (6, 6)],
-                    [b'2L', 53, 'CG', 'C',18, 14, 45, (9, 3)],##this variant gets filtered out for QD
-                    [b'2L', 207, 'ATATA','A',13, 29.2, 41, (3, 9)], ##this variant gets filtered out as non-CDS
-                    [b'2L', 602, 'TCTCT', 'T', 27, 16, 41, (0, 12)],
-                    [b'2L', 754, 'TCTGT','TC',18, 33.2, 29, (6, 6)],##this variant gets filtered out for MQ
-                    [b'2L', 1090,'G','GTTT',17,31.4, 43, (6, 6)],
-                    [b'2L', 1114, 'GCAT', 'G', 20, 37.2, 44, (6, 6)],
-                    [b'2L', 1129, 'T', 'TTTT', 32, 15, 40, (3, 9)],
-                    [b'2L', 1150, 'AAA', 'A', 30, 20, 45, (0, 10)]
+            records = [[b'2L', 20, b'A',b'ATC', 15, 35.7, 45, (6, 6)],
+                    [b'2L', 53, b'CG', b'C',18, 14, 45, (9, 3)],##this variant gets filtered out for QD
+                    [b'2L', 207, b'ATATA', b'A', 13, 29.2, 41, (3, 9)], ##this variant gets filtered out as non-CDS
+                    [b'2L', 602, b'TCTCT', b'T', 27, 16, 41, (0, 12)],
+                    [b'2L', 754, b'TCTGT', b'TC', 18, 33.2, 29, (6, 6)],##this variant gets filtered out for MQ
+                    [b'2L', 1090, b'G', b'GTTT', 17, 31.4, 43, (6, 6)],
+                    [b'2L', 1114, b'GCAT', b'G', 20, 37.2, 44, (6, 6)],
+                    [b'2L', 1129, b'T', b'TTTT', 32, 15, 40, (3, 9)],
+                    [b'2L', 1150, b'AAA', b'A', 30, 20, 45, (0, 10)]
                       ]
             dtype = [('CHROM', 'S4'),
                 ('POS', 'u4'),
@@ -77,10 +77,10 @@ class ChromTestCase(unittest.TestCase):
             
             ##mock feature table
             feature_table_data = [
-                ['2L', 'DB', 'gene', 15, 2000, -1, '+', -1, 'gene1' , '.'],
-                ['2L', 'DB', 'CDS', 17, 77, -1, '+', 0, 'gene1-PA', 'gene1-RA'],
-                ['2L', 'DB', 'CDS', 569, 803, -1, '+', 2, 'gene1-PA', 'gene1-RA'],
-                ['2L', 'DB', 'CDS', 1001, 1166, -1, '+', 2, 'gene1-PA', 'gene1-RA'],
+                ["2L", "DB", b'gene', 15, 2000, -1, "+", -1, "gene1" , "."],
+                ["2L", "DB", b'CDS', 17, 77, -1, "+", 0, "gene1-PA", "gene1-RA"],
+                ["2L", "DB", b'CDS', 569, 803, -1, "+", 2, "gene1-PA", "gene1-RA"],
+                ["2L", "DB", b'CDS', 1001, 1166, -1, "+", 2, "gene1-PA", "gene1-RA"],
                 ]
             
             feature_table_dtype = [
@@ -100,7 +100,7 @@ class ChromTestCase(unittest.TestCase):
             
             
             self.test_feature_table = \
-            allel.FeatureTable(feature_table_data, dtype=feature_table_dtype)
+            allel.FeatureTable(feature_table_data, names=feature_table_names)
             ##self.chrom.read_calls()
             
             ##mock metadata
@@ -111,7 +111,7 @@ class ChromTestCase(unittest.TestCase):
             self.chrom.metadata = \
             pd.DataFrame({'samples': sample_names, 'role': sample_roles, 'sex': sample_sexes})
             
-            self.chrom.ID_positions(self.test_feature_table[self.test_feature_table["type"] == b"CDS"])
+            self.chrom.ID_positions(self.test_feature_table[self.test_feature_table["type"] == b'CDS'])
             
         def test_check_metadata_parental(self):
             

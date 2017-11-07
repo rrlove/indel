@@ -46,8 +46,8 @@ class Chrom():
             
         self.exonicPositions, self.overlappedFeatures = \
         self.allPositions.locate_intersection_ranges(
-            feature_table[feature_table.seqid == self.name.encode('ascii')].start,
-            feature_table[feature_table.seqid == self.name.encode('ascii')].end)
+            feature_table[feature_table.seqid == self.name].start,
+            feature_table[feature_table.seqid == self.name].end)
         
     def extract_exonic(self):
         
