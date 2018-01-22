@@ -70,7 +70,7 @@ class ChromTestCase(unittest.TestCase):
             
             vt = allel.VariantTable(records, dtype=dtype, index=('CHROM','POS'))
             
-            callset = {"2L": {"variants": vt, "calldata/genotype": gt, "calldata/GQ": gq}}
+            callset = {"variants": vt, "calldata/genotype": gt, "calldata/GQ": gq}
             
             self.chrom = indel.Chrom("2L",'fake_path')
             self.chrom.callset = callset
@@ -202,8 +202,8 @@ class ChromTestCase(unittest.TestCase):
             
             '''I reuse the original mock genotypes and variant filters and
             "pretend" 2L is a sex chromosome'''
-            self.chrom.gt_filtered = self.chrom.callset[self.chrom.name]["calldata/genotype"]
-            self.chrom.vt_filtered = self.chrom.callset[self.chrom.name]["variants"]
+            self.chrom.gt_filtered = self.chrom.callset["calldata/genotype"]
+            self.chrom.vt_filtered = self.chrom.callset["variants"]
             
             heterogametic = [2,3]
             self.chrom.filter_heterozygous_heterogametes(heterogametic)

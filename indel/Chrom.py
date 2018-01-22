@@ -10,12 +10,15 @@ class Chrom():
         self.path = path_to_hdf5
         
     def read_calls(self):
-        self.callset = h5py.File(self.path,mode='r')
+        ##because a callset always has the same name, and is processed chrom by chrom, I can simplify the syntax
+        ##and change all references to self.callset[self.name] to self.callset
+        self.raw_callset = h5py.File(self.path,mode='r')
+        self.callset = self.raw_callset[self.name]
         
     def read_metadata(self,path_to_metadata):
         self.metadata = pd.read_csv(path_to_metadata, sep='\t')
         
-        assert len(self.metadata) == self.callset[self.name]["samples"].shape[0] \
+        assert len(self.metadata) == self.callset["samples"].shape[0] \
         , "Metadata and callset sample lists are different lengths"
         
     def check_metadata_parental(self):
@@ -40,7 +43,7 @@ class Chrom():
         I'll have filtered out some of the positions...)'''
         
         try:
-            self.allPositions = allel.SortedIndex(self.callset[self.name]["variants"]["POS"])
+            self.allPositions = allel.SortedIndex(self.callset["variants"]["POS"])
         except ValueError:
             print("Load one chromosome at a time")
             
@@ -52,13 +55,14 @@ class Chrom():
     def extract_exonic(self):
         
         '''return genotypes for all exonic positions, associated genotype qualities,
-        and a variant table of the exonic positions'''
+        and a variant table of the exonic positions'''        
         
-        self.genotypes = allel.GenotypeArray(self.callset[self.name]["calldata/genotype"]).\
+        self.genotypes = allel.GenotypeArray(self.callset["calldata/genotype"]).\
         subset(sel0=self.exonicPositions)
-        self.GQ = self.callset[self.name]["calldata/GQ"][self.exonicPositions,:]
         
-        self.vt = allel.VariantChunkedTable(self.callset[self.name]["variants"])[:]\
+        self.GQ = self.callset["calldata/GQ"][self.exonicPositions,:]
+
+        self.vt = allel.VariantChunkedTable(self.callset["variants"])[:]\
         [self.exonicPositions]
         
         assert len(self.genotypes) == len(self.GQ) == len(self.vt)\
