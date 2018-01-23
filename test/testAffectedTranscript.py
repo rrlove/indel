@@ -89,12 +89,16 @@ class AffectedTranscriptTestCase(unittest.TestCase):
                 variant.add_genos(self.genotypes, self.variant_table)
             
             self.affected_transcript = indel.AffectedTranscript(b'3R','gene3-RA')
-                        
+        
+        def add_variants_to_transcript(self):
+            
+            for variant in self.variants:
+                
+                self.affected_transcript.add_variant(variant)
+        
         def test_add_variant(self):
                 
-            for variant in self.variants:
-                    
-                self.affected_transcript.add_variant(variant)
+            self.add_variants_to_transcript()
                     
             ##test the vtbl_indices
                 
@@ -116,9 +120,7 @@ class AffectedTranscriptTestCase(unittest.TestCase):
 
         def test_extract_vtbl(self):
             
-            for variant in self.variants:
-                    
-                self.affected_transcript.add_variant(variant)
+            self.add_variants_to_transcript()
                 
             self.affected_transcript.extract_vtbl(self.variant_table)
                 
@@ -128,9 +130,7 @@ class AffectedTranscriptTestCase(unittest.TestCase):
                 
         def test_calculate_all_possible_length_changes(self):
             
-            for variant in self.variants:
-                
-                self.affected_transcript.add_variant(variant)
+            self.add_variants_to_transcript()
                 
             self.affected_transcript.extract_vtbl(self.variant_table)
             
