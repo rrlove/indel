@@ -89,7 +89,7 @@ class AffectedTranscriptTestCase(unittest.TestCase):
                 variant.add_genos(self.genotypes, self.variant_table)
             
             self.affected_transcript = indel.AffectedTranscript(b'3R','gene3-RA')
-        
+            
         def add_variants_to_transcript(self):
             
             for variant in self.variants:
@@ -143,6 +143,43 @@ class AffectedTranscriptTestCase(unittest.TestCase):
             npt.assert_array_equal(test_possible_length_changes, 
                                     self.affected_transcript.possible_length_changes)
                 
+                
+        def test_extract_haplotypes(self):
+                        
+            ##TO-DO: what happens if the vtbl indices are out of order?
+            ##TO-DO: what happens if the vtbl indices are negative?
+            ##TO-DO: what happens if some of the genotypes can't be phased?
+            
+            self.affected_transcript.vtbl_indices = [0,3,5,6,7]
+            
+            mock_phased_genotype_array = {self.affected_transcript.chrom:
+                                          allel.GenotypeArray([[[0,1],[0,0],[1,0],[0,0],[1,0]],
+                                                   [[1,1],[0,0],[1,0],[1,0],[1,0]],
+                                                   [[0,0],[0,1],[0,1],[0,0],[0,0]],
+                                                   [[1,0],[0,0],[0,0],[1,0],[0,0]],
+                                                   [[0,1],[0,0],[1,0],[0,0],[1,0]],
+                                                   [[1,1],[0,0],[1,0],[1,0],[1,0]],
+                                                   [[1,1],[0,0],[1,0],[1,0],[1,0]],
+                                                   [[1,1],[0,0],[1,0],[1,0],[1,0]]], dtype='i1')}
+            
+            
+            expected_genos_phased = np.array([[[0,1],[0,0],[1,0],[0,0],[1,0]],
+                                             [[1,0],[0,0],[0,0],[1,0],[0,0]],
+                                             [[1,1],[0,0],[1,0],[1,0],[1,0]],
+                                             [[1,1],[0,0],[1,0],[1,0],[1,0]],
+                                             [[1,1],[0,0],[1,0],[1,0],[1,0]]])
+            
+            expected_haplotypes = np.array([[0,1,0,0],
+                                           [1,0,0,0],
+                                           [1,1,0,0],
+                                           [1,1,0,0],
+                                           [1,1,0,0]])
+
+            self.affected_transcript.extract_haplotypes(mock_phased_genotype_array)
+            
+            npt.assert_array_equal(self.affected_transcript.genos_phased, expected_genos_phased)
+            
+            npt.assert_array_equal(self.affected_transcript.haplotypes, expected_haplotypes)                
       
 
 if __name__ =='__main__':
