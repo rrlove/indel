@@ -39,7 +39,7 @@ class AffectedTranscript():
         
     def extract_haplotypes(self,phased_genotype_array_by_chrom):
         
-        self.genos_phased = phased_genotype_array_by_chrom[self.chrom][self.vtbl_indices]
+        self.genos_phased = phased_genotype_array_by_chrom[self.chrom][[self.vtbl_indices]]
         
         haplotypes_mother = self.genos_phased[:,0].to_haplotypes()
         haplotypes_father = self.genos_phased[:,1].to_haplotypes()
