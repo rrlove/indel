@@ -17,7 +17,7 @@ class IntersectingVariant():
         ##record its position in the variant table-- crucial for filtering genotypes
         index = np.where(variant_table["POS"] == self.position)[0][0]
         
-        assert index > 0, "Can't have a negative variant table index"
+        assert index >= 0, "Can't have a negative variant table index"
         
         self.vt_index = index
         
