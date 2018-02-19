@@ -15,7 +15,11 @@ class IntersectingVariant():
         self.record = variant_table.query(self.expression)
         
         ##record its position in the variant table-- crucial for filtering genotypes
-        self.vt_index = np.where(variant_table["POS"] == self.position)[0][0]
+        index = np.where(variant_table["POS"] == self.position)[0][0]
+        
+        assert index > 0, "Can't have a negative variant table index"
+        
+        self.vt_index = index
         
         ##for every ALT allele, record the length change
         self.num_alleles = self.record["num_alleles"][0]
