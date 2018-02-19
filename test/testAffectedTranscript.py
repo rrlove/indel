@@ -96,27 +96,34 @@ class AffectedTranscriptTestCase(unittest.TestCase):
                 
                 self.affected_transcript.add_variant(variant)
         
-        def test_add_variant(self):
-                
+        def test_vtbl_indices(self):
+            
             self.add_variants_to_transcript()
-                    
-            ##test the vtbl_indices
-                
+            
             test_vtbl_indices = [0,1,2,3,4,5]
             npt.assert_array_equal(test_vtbl_indices, 
                                    self.affected_transcript.vtbl_indices)
-                
-            ##test the n_variants
-                
+            
+        def test_n_variants(self):
+            
+            self.add_variants_to_transcript()
+            
             self.assertEqual(self.affected_transcript.n_variants, 6)
-                
-            ##test the variant_length_changes
-                
+            
+        def test_variant_length_changes(self):
+            
+            self.add_variants_to_transcript()
+            
             test_variant_length_changes = [
                 {0,-1},{0,1,2,3},{0,1},{0,3,6},{0,-3},{0,-6}]
-                
+            
             npt.assert_array_equal(test_variant_length_changes, 
-                                    self.affected_transcript.variant_length_changes)
+                                   self.affected_transcript.variant_length_changes)
+        
+        def test_empty_vtbl_index_errors_out(self):
+            
+            self.assertRaises(AssertionError, 
+                              self.affected_transcript.extract_vtbl, self.variant_table)
 
         def test_extract_vtbl(self):
             
