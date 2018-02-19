@@ -4,17 +4,17 @@ import numpy as np
 import pandas as pd
 
 class Chrom():
-    
+
     def __init__(self, name, path_to_hdf5):
         self.path = path_to_hdf5
         self.name = name
 
     def read_calls(self):
-	self.callset = h5py.File(self.path, mode='r')[self.name]
-        
+        self.callset = h5py.File(self.path, mode='r')[self.name]
+
     def read_metadata(self,path_to_metadata):
         self.metadata = pd.read_table(path_to_metadata)
-        
+
         assert len(self.metadata) == self.callset["samples"].shape[0] \
         , "Metadata and callset sample lists are different lengths"
         
