@@ -5,18 +5,13 @@ import pandas as pd
 
 class Chrom():
     
-    def __init__(self,name,path_to_hdf5):
-        self.name = str(name)
+    def __init__(self, name, path_to_hdf5):
         self.path = path_to_hdf5
-        
-    def read_calls(self):
-        ##because a callset always has the same name, and is processed chrom by chrom, I can simplify the syntax
-        ##and change all references to self.callset[self.name] to self.callset
-        self.raw_callset = h5py.File(self.path,mode='r')
-        self.callset = self.raw_callset[self.name]
+        self.name = name
+        self.callset = h5py.File(self.path, mode='r')[self.name]
         
     def read_metadata(self,path_to_metadata):
-        self.metadata = pd.read_csv(path_to_metadata, sep='\t')
+        self.metadata = pd.read_table(path_to_metadata)
         
         assert len(self.metadata) == self.callset["samples"].shape[0] \
         , "Metadata and callset sample lists are different lengths"
@@ -47,10 +42,13 @@ class Chrom():
         except ValueError:
             print("Load one chromosome at a time")
             
+        self.region_feature = feature_table[feature_table.seqid == self.name]
+        assert self.region_feature.shape[0] > 0
+
         self.exonicPositions, self.overlappedFeatures = \
         self.allPositions.locate_intersection_ranges(
-            feature_table[feature_table.seqid == self.name].start,
-            feature_table[feature_table.seqid == self.name].end)
+            self.region_feature.start,
+            self.region_feature.end)
         
     def extract_exonic(self):
         
