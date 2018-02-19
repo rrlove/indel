@@ -24,7 +24,9 @@ class AffectedTranscript():
     
     ##run this method after you have added all variants
     def extract_vtbl(self,vtbl):
-        
+
+        assert len(self.vtbl_indices) > 0, "This transcript has no associated variants"
+        self.vtbl_indices.sort()
         self.vtbl = vtbl[vtbl["CHROM"] == self.chrom][[self.vtbl_indices]]
 
     ##for each variant, keep track of all possible length changes
