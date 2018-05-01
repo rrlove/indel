@@ -18,6 +18,8 @@ class IntersectingVariant():
         index = np.where(variant_table["POS"] == self.position)[0][0]
         
         assert index >= 0, "Can't have a negative variant table index"
+
+	assert len(index) == 1, "More than one site matches the query"
         
         self.vt_index = index
         
