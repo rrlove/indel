@@ -50,7 +50,8 @@ class ExonSequence:
             
             index = variant.pos - self.start
             
-            if len(variant.alt) >= len(variant.ref):##variant is insertion or SNP
+            if len(variant.alt) >= len(variant.ref):
+                ##variant is insertion or SNP
                 
                 if not variant.ref == self.sequence[index]:
                     return("Reference alleles don't match at" + variant.pos)
@@ -66,7 +67,8 @@ class ExonSequence:
                 
                 mutable_sequence_list[index] = variant.alt
                 
-                del mutable_sequence_list[(index + 1): (index + len(variant.ref))]
+                del \
+                mutable_sequence_list[(index + 1):(index + len(variant.ref))]
                 
         self.changed_sequence = ''.join(mutable_sequence_list)
         
@@ -94,7 +96,8 @@ class Transcript:
             
         if which == "both" or which == "changed":
             
-            self.seq_changed_translated = str(Seq.Seq(self.seq_changed).translate())
+            self.seq_changed_translated =\
+            str(Seq.Seq(self.seq_changed).translate())
             
     def populate_exon_seq(self):
 
@@ -126,7 +129,6 @@ class Transcript:
         
         for exon in self.exons:
     
-        #print([exon.start <= variant.pos <= exon.end for variant in test_variants])
             variant_bool = \
             [exon.start <= variant.pos <= exon.end for variant in variants]
             
@@ -134,27 +136,29 @@ class Transcript:
     
     def assemble_changed_seq(self):
         
-        self.seq_changed = ''.join([exon.changed_sequence for exon in self.exons])
+        self.seq_changed =\
+        ''.join([exon.changed_sequence for exon in self.exons])
         
 def make_POST_request(gene, 
                       post_server = "https://www.vectorbase.org/rest", 
                       post_ext = "/sequence/id/",
                      feature = "cds"):
 
-    headers = {'Content-type' : 'application/json', 'Accept' : 'application/json'}
+    headers = {'Content-type' : 'application/json',
+               'Accept' : 'application/json'}
     
     post_string = post_server + post_ext
     
-    feature_seq_payload = '{"ids" : ["' + gene + '"], "type" : "' + feature + '"}'
+    feature_seq_payload = '{"ids" : ["' + gene + '"],\
+    "type" : "' + feature + '"}'
     
-    feature_seq = requests.post(post_string, data = feature_seq_payload, headers = headers)
+    feature_seq = requests.post(post_string, 
+                                data = feature_seq_payload, headers = headers)
     
     if not feature_seq.status_code == requests.codes.ok:
         
-        raise RequestReturnError("POST request status: ", feature_seq.status_code)
-    
-    #transcript = Transcript(name = feature_seq.json()[0]["id"], 
-     #                       seq = feature_seq.json()[0]["seq"])
+        raise RequestReturnError("POST request status: ", 
+                                 feature_seq.status_code)
     
     return feature_seq.json()
 
@@ -169,18 +173,22 @@ def make_GET_request(gene,
                     get_server = "https://www.vectorbase.org/rest",
                     feature_types = ["transcript","exon","cds"]):
     
-    headers = {'Content-type' : 'application/json', 'Accept' : 'application/json'}
+    headers = {'Content-type' : 'application/json', \
+               'Accept' : 'application/json'}
     
     get_ext = "/overlap/id/" + gene + "?"
     
-    get_string = get_server + get_ext + "".join(\
-            ["feature=" + feature + ";" for feature in feature_types]).rstrip(";")
+    get_string =\
+    get_server + get_ext +\
+    "".join(["feature=" + feature +\
+             ";" for feature in feature_types]).rstrip(";")
     
     feature_coords = requests.get(get_string, headers = headers)
     
     if not feature_coords.status_code == requests.codes.ok:
         
-        raise RequestReturnError("GET request status: ", feature_coords.status_code)
+        raise RequestReturnError("GET request status: ",
+                                 feature_coords.status_code)
         
     return feature_coords.json()
 
