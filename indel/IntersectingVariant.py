@@ -19,7 +19,7 @@ class IntersectingVariant():
         
         assert index >= 0, "Can't have a negative variant table index"
 
-	assert len(index) == 1, "More than one site matches the query"
+        assert len(index) == 1, "More than one site matches the query"
         
         self.vt_index = index
         
