@@ -39,20 +39,24 @@ class TranscriptTestCase(unittest.TestCase):
         ##pass a set of exons whose collective length is less than the length
         ##of the sequence, and make sure an AssertionError is raised
 
-        exon1 = indel.ExonSequence("2L", "foo", 1, "+", 5, 21)
-        exon2 = indel.ExonSequence("2L", "foo", 2, "+", 77, 90)
+        exon1 = indel.variants.ExonSequence("2L", "foo", 1, "+", 5, 21)
+        exon2 = indel.variants.ExonSequence("2L", "foo", 2, "+", 77, 90)
         
         self.transcript.add_exon(exon1)
         self.transcript.add_exon(exon2)
+        
+        #print(sum([exon.length for exon in self.transcript.exons]) ==\
+        #      len(self.transcript.seq))
+        #print(len(self.transcript.seq))
         
         self.assertRaises(AssertionError, self.transcript.populate_exon_seq)
         
     def test_populate_exon_seq_correct_seqs(self):
         
-        exon1 = indel.ExonSequence("2L", "foo", 1, "+", 5, 21)#17
-        exon2 = indel.ExonSequence("2L", "foo", 2, "+", 50, 55)#6
-        exon3 = indel.ExonSequence("2L", "foo", 3, "+", 70, 74)#5
-        exon4 = indel.ExonSequence("2L", "foo", 4, "+", 103, 107)#5
+        exon1 = indel.variants.ExonSequence("2L", "foo", 1, "+", 5, 21)#17
+        exon2 = indel.variants.ExonSequence("2L", "foo", 2, "+", 50, 55)#6
+        exon3 = indel.variants.ExonSequence("2L", "foo", 3, "+", 70, 74)#5
+        exon4 = indel.variants.ExonSequence("2L", "foo", 4, "+", 103, 107)#5
         
         for exon in [exon1, exon2, exon3, exon4]:
             self.transcript.add_exon(exon)
@@ -65,8 +69,21 @@ class TranscriptTestCase(unittest.TestCase):
         self.assertEqual(self.transcript.exons[1].sequence,
                          "GCAGTC")
         
-        self.assertEqual(self.transcript.exons[1].sequence,
+        self.assertEqual(self.transcript.exons[2].sequence,
                          "CGGGG")
                 
-        self.assertEqual(self.transcript.exons[1].sequence,
+        self.assertEqual(self.transcript.exons[3].sequence,
                          "CCTAG")
+        
+    def test_a_populate_exon_has_exons(self):
+        
+        self.assertRaises(AssertionError, self.transcript.populate_exon_seq)
+    
+    
+    '''def test_assertion_error(self):
+        
+        def toy_function(num1, num2):
+            
+            self.assertEqual(num1, num2)
+        
+        self.assertRaises(AssertionError, toy_function, 1, 3)'''
