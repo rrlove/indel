@@ -185,12 +185,26 @@ class Chrom():
         assert self.num_present == self.gt_Mendel_filtered.shape[1], \
         "You have a different number of samples from when you started!"
         
-        self.phased_Bool = np.sum(self.phased.is_phased, axis=1) >= \
-        (self.num_present - permitted_nonphased)
+        self.parents_phased_bool =\
+        np.sum(self.phased.is_phased[:, 0:2], axis=1) == 2
         
-        self.phased_genos = self.phased.subset(sel0=self.phased_Bool)
+        self.phased_genos = self.phased.subset(sel0 = self.parents_phased_bool)
+        
         self.unphased_genos_at_phased_site = \
-        self.gt_Mendel_filtered.subset(sel0=self.phased_Bool)
-        self.vt_phased = self.vt_Mendel_filtered[self.phased_Bool]
+        self.gt_Mendel_filtered.subset(sel0 = self.parents_phased_bool)
+        
+        self.vt_phased = self.vt_Mendel_filtered[self.parents_phased_bool]
+        
+        if permitted_nonphased < len(self.metadata):
+        
+            self.phased_Bool = np.sum(self.phased_genos.is_phased, axis=1) >= \
+            (self.num_present - permitted_nonphased)
+        
+            self.phased_genos = self.phased_genos.subset(sel0=self.phased_Bool)
+            
+            self.unphased_genos_at_phased_site = \
+            self.gt_Mendel_filtered.subset(sel0=self.phased_Bool)
+        
+            self.vt_phased = self.vt_Mendel_filtered[self.phased_Bool]
 
     
