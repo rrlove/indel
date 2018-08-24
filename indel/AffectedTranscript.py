@@ -1,5 +1,6 @@
 import allel
 import itertools
+import numpy as np
 
 class AffectedTranscript():
     
@@ -29,7 +30,7 @@ class AffectedTranscript():
         "This transcript has no associated variants"
         self.vtbl_indices.sort()
         self.vtbl = vtbl[vtbl["CHROM"] ==\
-                         self.chrom.encode()][[self.vtbl_indices]]
+                         self.chrom.encode('ascii')][[self.vtbl_indices]]
 
     ##for each variant, keep track of all possible length changes
     def calculate_all_possible_length_changes(self):
@@ -47,13 +48,23 @@ class AffectedTranscript():
     def extract_haplotypes(self,phased_genotype_array_by_chrom):
         
         self.genos_phased =\
-        phased_genotype_array_by_chrom[self.chrom][[self.vtbl_indices]]
+        phased_genotype_array_by_chrom[self.chrom][self.vtbl_indices]
         
         haplotypes_mother = self.genos_phased[:,0].to_haplotypes()
         haplotypes_father = self.genos_phased[:,1].to_haplotypes()
         
         self.haplotypes =\
         haplotypes_mother.concatenate(haplotypes_father, axis=1)
+        
+        self.variants_by_haplotype = {}
+    
+        for i in range(4):
+        
+            hap = self.haplotypes[:,i]
+        
+            if np.sum(hap) > 0:
+        
+                self.variants_by_haplotype[i] = hap
              
     def calculate_haplotype_based_length_changes(self):
         

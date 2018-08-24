@@ -47,11 +47,16 @@ class AffectedTranscriptTestCase(unittest.TestCase):
             
             ##mock feature table
             feature_table_data = [
-                ['3R', 'DB', 'CDS', 95, 120, -1, '+', 0, 'gene3-PA', 'gene3-RA'],
-                ['3R', 'DB', 'CDS', 206, 296, -1, '+', 1, 'gene3-PA', 'gene3-RA'],
-                ['3R', 'DB', 'CDS', 310, 363, -1, '+', 0, 'gene3-PA', 'gene3-RA'],
-                ['3R', 'DB', 'CDS', 15780, 15809, -1, '+', 0, 'gene24-PA', 'gene24-RA'],
-                ['3R', 'DB', 'CDS', 21075362, 21075460, -1, '+', 0, 'gene436-PA', 'gene436-RA']
+                ['3R', 'DB', 'CDS', 95, 120, -1, '+', 0,
+                 'gene3-PA', 'gene3-RA'],
+                ['3R', 'DB', 'CDS', 206, 296, -1, '+', 1,
+                 'gene3-PA', 'gene3-RA'],
+                ['3R', 'DB', 'CDS', 310, 363, -1, '+', 0,
+                 'gene3-PA', 'gene3-RA'],
+                ['3R', 'DB', 'CDS', 15780, 15809, -1, '+',
+                 0, 'gene24-PA', 'gene24-RA'],
+                ['3R', 'DB', 'CDS', 21075362, 21075460, -1,
+                 '+', 0, 'gene436-PA', 'gene436-RA']
                 ]
             
             feature_table_dtype = [
@@ -88,7 +93,8 @@ class AffectedTranscriptTestCase(unittest.TestCase):
                 variant.add_vtbl_record(self.variant_table)
                 variant.add_genos(self.genotypes, self.variant_table)
             
-            self.affected_transcript = indel.AffectedTranscript(b'3R','gene3-RA')
+            self.affected_transcript =\
+            indel.AffectedTranscript('3R','gene3-RA')
             
         def add_variants_to_transcript(self):
             
@@ -123,7 +129,8 @@ class AffectedTranscriptTestCase(unittest.TestCase):
         def test_empty_vtbl_index_errors_out(self):
             
             self.assertRaises(AssertionError, 
-                              self.affected_transcript.extract_vtbl, self.variant_table)
+                              self.affected_transcript.extract_vtbl, 
+                              self.variant_table)
 
         def test_extract_vtbl(self):
             
@@ -182,12 +189,19 @@ class AffectedTranscriptTestCase(unittest.TestCase):
                                            [1,1,0,0],
                                            [1,1,0,0]])
 
-            self.affected_transcript.extract_haplotypes(mock_phased_genotype_array)
+            self.affected_transcript.extract_haplotypes(
+                    mock_phased_genotype_array)
             
-            npt.assert_array_equal(self.affected_transcript.genos_phased, expected_genos_phased)
+            npt.assert_array_equal(self.affected_transcript.genos_phased, 
+                                   expected_genos_phased)
             
-            npt.assert_array_equal(self.affected_transcript.haplotypes, expected_haplotypes)                
-      
+            npt.assert_array_equal(self.affected_transcript.haplotypes, 
+                                   expected_haplotypes)      
+            
+        def test_variants_by_haplotype(self):
+            
+            npt.assert_equal(2,3)
+            ##fix this
 
 if __name__ =='__main__':
 	unittest.main()

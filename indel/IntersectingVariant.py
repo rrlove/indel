@@ -14,7 +14,8 @@ class IntersectingVariant():
         ##pull out the variant table row describing this position
         self.record = variant_table.query(self.expression)
         
-        ##record its position in the variant table-- crucial for filtering genotypes
+        ##record its position in the variant table:
+        #crucial for filtering genotypes
         index = np.where(variant_table["POS"] == self.position)[0]
         
         assert index >= 0, "Can't have a negative variant table index"
@@ -27,7 +28,8 @@ class IntersectingVariant():
         self.num_alleles = self.record["num_alleles"][0]
         
         for i in range(self.num_alleles-1):
-            length_change = len(self.record["ALT"][0][i]) - len(self.record["REF"][0])
+            length_change = len(self.record["ALT"][0][i]) -\
+            len(self.record["REF"][0])
             self.length_change.append(length_change)
         
     def add_genos(self,genotypes,variant_table):
