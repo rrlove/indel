@@ -115,20 +115,10 @@ class AffectedTranscriptTestCase(unittest.TestCase):
             self.add_variants_to_transcript()
             
             self.assertEqual(self.affected_transcript.n_variants, 6)
-            
-        def test_variant_length_changes(self):
-            
-            self.add_variants_to_transcript()
-            
-            test_variant_length_changes = [
-                {0,-1},{0,1,2,3},{0,1},{0,3,6},{0,-3},{0,-6}]
-            
-            npt.assert_array_equal(test_variant_length_changes, 
-                                   self.affected_transcript.variant_length_changes)
         
         def test_empty_vtbl_index_errors_out(self):
             
-            self.assertRaises(AssertionError, 
+            self.assertRaises(ValueError, 
                               self.affected_transcript.extract_vtbl, 
                               self.variant_table)
 
@@ -142,39 +132,23 @@ class AffectedTranscriptTestCase(unittest.TestCase):
                 
             npt.assert_array_equal(test_vtbl, self.affected_transcript.vtbl)
                 
-        def test_calculate_all_possible_length_changes(self):
-            
-            self.add_variants_to_transcript()
-                
-            self.affected_transcript.extract_vtbl(self.variant_table)
-            
-            self.affected_transcript.calculate_all_possible_length_changes()
-                
-            test_possible_length_changes = {
-                -10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10
-            }
-                
-            npt.assert_array_equal(test_possible_length_changes, 
-                                    self.affected_transcript.possible_length_changes)
-                
-                
         def test_extract_haplotypes(self):
                         
-            ##TO-DO: what happens if the vtbl indices are out of order?
             ##TO-DO: what happens if the vtbl indices are negative?
             ##TO-DO: what happens if some of the genotypes can't be phased?
             
             self.affected_transcript.vtbl_indices = [0,3,5,6,7]
             
-            mock_phased_genotype_array = {self.affected_transcript.chrom:
-                                          allel.GenotypeArray([[[0,1],[0,0],[1,0],[0,0],[1,0]],
-                                                   [[1,1],[0,0],[1,0],[1,0],[1,0]],
-                                                   [[0,0],[0,1],[0,1],[0,0],[0,0]],
-                                                   [[1,0],[0,0],[0,0],[1,0],[0,0]],
-                                                   [[0,1],[0,0],[1,0],[0,0],[1,0]],
-                                                   [[1,1],[0,0],[1,0],[1,0],[1,0]],
-                                                   [[1,1],[0,0],[1,0],[1,0],[1,0]],
-                                                   [[1,1],[0,0],[1,0],[1,0],[1,0]]], dtype='i1')}
+            mock_phased_genotype_array = {
+                    self.affected_transcript.chrom:allel.GenotypeArray(
+                            [[[0,1],[0,0],[1,0],[0,0],[1,0]],
+                             [[1,1],[0,0],[1,0],[1,0],[1,0]],
+                             [[0,0],[0,1],[0,1],[0,0],[0,0]],
+                             [[1,0],[0,0],[0,0],[1,0],[0,0]],
+                             [[0,1],[0,0],[1,0],[0,0],[1,0]],
+                             [[1,1],[0,0],[1,0],[1,0],[1,0]],
+                             [[1,1],[0,0],[1,0],[1,0],[1,0]],
+                             [[1,1],[0,0],[1,0],[1,0],[1,0]]], dtype='i1')}
             
             
             expected_genos_phased = np.array([[[0,1],[0,0],[1,0],[0,0],[1,0]],

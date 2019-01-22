@@ -13,7 +13,7 @@ class ChromTestCase(unittest.TestCase):
         def setUp(self):
             
             ##mock genotype qualities
-            gq = np.array([[27, 23, 19, 21, 22, 24],
+            gq = np.array([[27, 23, 19, 21, 15, 24],
                            [28, 21, 23, 20, 29, 25],
                            [32, 20, 29, 31, 30, 20],
                            [21, 27, 29, 32, 30, 33],
@@ -89,6 +89,9 @@ class ChromTestCase(unittest.TestCase):
             
             self.chrom = indel.Chrom("2L",'fake_path')
             self.chrom.callset = callset
+            self.chrom.genotypes = gt
+            self.chrom.vt = vt
+            self.chrom.gq = gq
             
             ##mock feature table
             feature_table_data = [
@@ -187,13 +190,13 @@ class ChromTestCase(unittest.TestCase):
             
             self.assertEqual(expected_exonic_gt_shape, 
                              self.chrom.genotypes.shape)
-            self.assertEqual(expected_exonic_gq_shape, self.chrom.GQ.shape)
+            self.assertEqual(expected_exonic_gq_shape, self.chrom.gq.shape)
             self.assertEqual(expected_exonic_vt_shape, self.chrom.vt.shape)
             
         def test_quality_filtering(self):
             
             self.chrom.extract_exonic()
-            self.chrom.filter_GQ_MQ_QD()
+            self.chrom.filter_GQ_MQ_QD(allowed_missing=1)
             
             self.assertEqual(self.chrom.num_present, 6)
             self.assertEqual(self.chrom.genotypes_GQ_filtered.shape, (7, 6, 2))

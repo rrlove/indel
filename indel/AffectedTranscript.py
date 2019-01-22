@@ -1,49 +1,35 @@
-import allel
-import itertools
 import numpy as np
 
 class AffectedTranscript():
     
-    def __init__(self,chrom,name):
+    def __init__(self, chrom, name):
         
         self.chrom = chrom
         self.name = name
+        self.n_exons = 0
+        self.ranges = []
         self.intersecting_variants = []
         self.vtbl_indices = []
-        self.variant_length_changes = []
         self.n_variants = 0
-    
-    '''a collection of variant records, the index to access the associated 
-    genotypes, and the length change(s) of each'''
-    
+        
     def add_variant(self,variant):
         
         self.intersecting_variants.append(variant)
         self.vtbl_indices.append(variant.vt_index)
-        self.variant_length_changes.append(set(variant.length_change))
         self.n_variants += 1
     
     ##run this method after you have added all variants
     def extract_vtbl(self,vtbl):
-
-        assert len(self.vtbl_indices) > 0,\
-        "This transcript has no associated variants"
-        self.vtbl_indices.sort()
-        self.vtbl = vtbl[vtbl["CHROM"] ==\
-                         self.chrom.encode('ascii')][[self.vtbl_indices]]
-
-    ##for each variant, keep track of all possible length changes
-    def calculate_all_possible_length_changes(self):
-                        
-        ##calculate all possible "paths" 
-        ##through the collection of possible length changes
-        ##first, assemble that collection of possible length changes
-        all_possible_changes =\
-        list(itertools.product(*self.variant_length_changes))
         
-        ##now, sum all of these and keep the unique set
-        self.possible_length_changes =\
-        set([sum(i) for i in all_possible_changes])
+        if not len(self.vtbl_indices) > 0:
+            
+            raise ValueError("This transcript has no associated variants")
+            
+        else:
+
+            self.vtbl_indices.sort()
+            self.vtbl = vtbl[vtbl["CHROM"] ==\
+                         self.chrom.encode('ascii')][[self.vtbl_indices]]
         
     def extract_haplotypes(self,phased_genotype_array_by_chrom):
         
@@ -70,25 +56,18 @@ class AffectedTranscript():
         
         self.haplotype_length_changes = {}
 
-        ##for all the different haplotypes for this transcript, 
-        ##calculate net change per haplotype
-        ##I DON'T want to remove variants that can't be phased, I think; 
-        ##right now, I only want
-        ##to narrow down the possible combinations of length changes 
-        ##to make them computationally tactable
+        ##calculate net length change for each haplotype 
         
         for haplotype_index in range(self.haplotypes.shape[1]):
             changes = []
             haplotype = self.haplotypes[:, haplotype_index]
             
-            ##get the index of each variant in the haplotype, 
-            ##and the variant itself
+            ##first, get the index and identity of each variant
             
             for variant_index,genotype_index in enumerate(haplotype):
                 
                 if genotype_index == 0:
-                    ##keep track of the cumulative length change of the 
-                    ##haplotype, which is 0 if the variant is REF
+                    ##if variant is REF, length change is 0
                     changes.append(0)
                 
                 else:
@@ -99,5 +78,5 @@ class AffectedTranscript():
                     len(self.intersecting_variants[variant_index]\
                         .record["REF"][0])
                     changes.append(change)
-    
+            
             self.haplotype_length_changes[tuple(haplotype)] = sum(changes)

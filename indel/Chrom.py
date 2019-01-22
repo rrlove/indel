@@ -11,6 +11,13 @@ class Chrom():
 
     def read_calls(self):
         self.callset = h5py.File(self.path, mode='r')[self.name]
+        
+        self.genotypes =\
+        allel.GenotypeArray(self.callset["calldata/genotype"])
+        
+        self.gq = self.callset["calldata/GQ"][:]
+
+        self.vt = allel.VariantChunkedTable(self.callset["variants"])[:]
 
     def read_metadata(self,path_to_metadata):
         self.metadata = pd.read_table(path_to_metadata)
@@ -62,16 +69,13 @@ class Chrom():
         associated genotype qualities, and a variant table 
         of the exonic positions'''        
         
-        self.genotypes =\
-        allel.GenotypeArray(self.callset["calldata/genotype"]).\
-        subset(sel0=self.exonicPositions)
+        self.genotypes = self.genotypes.subset(sel0=self.exonicPositions)
         
-        self.GQ = self.callset["calldata/GQ"][self.exonicPositions,:]
+        self.gq = self.gq[self.exonicPositions,:]
 
-        self.vt = allel.VariantChunkedTable(self.callset["variants"])[:]\
-        [self.exonicPositions]
+        self.vt = self.vt[self.exonicPositions]
         
-        assert len(self.genotypes) == len(self.GQ) == len(self.vt)\
+        assert len(self.genotypes) == len(self.gq) == len(self.vt)\
         , "Genotypes, genotype qualities, \
         and variant table do not have the same length"
         
@@ -79,20 +83,27 @@ class Chrom():
         ##any of the various indexing errors above/below
         
     def filter_GQ_MQ_QD(self,min_GQ=20,min_QD=15,min_MQ=40,allowed_missing=0):
-        '''return a set of genotypes and variants filtered for minimum # of 
-        present genotypes of a certain quality (GQ, allowed_missing), 
-        minimum map quality (MQ), and minimum depth-adjusted quality score (QD)
-        '''
+        '''return a set of genotypes and variants where genotypes below the
+        minimum genotype quality (GQ) are masked, and sites below the minimum 
+        map quality (MQ), depth-adjusted quality score (QD), and missingness
+        (allowed_missing) are filtered out'''
         
-        self.num_present = self.GQ.shape[1]
+        ##hide genotypes of poor quality, so they register as missing
+        self.genotypes.mask = self.gq < min_GQ
         
-        self.gq_filter = self.GQ >= min_GQ
-        self.gq_bool = np.sum(self.gq_filter, axis=1) >=\
-        (self.num_present - allowed_missing)
+        ##how many samples have to be called for a site to pass?
+        self.num_present = self.gq.shape[1]
         
-        ##filtering by GQ, which evaluates based on the genotype quality object
-        self.genotypes_GQ_filtered = self.genotypes.subset(sel0=self.gq_bool)
-        self.vtbl_GQ_filtered = self.vt[self.gq_bool]
+        min_called = self.num_present - allowed_missing
+        
+        ##get the list of sites with sufficient # of samples called
+        self.missingness_filter =\
+        np.sum(self.genotypes.is_called(), axis=1) >= min_called
+    
+        ##filter the genotypes and vtbl to keep only these sites
+        self.genotypes_GQ_filtered =\
+        self.genotypes.subset(sel0=self.missingness_filter)
+        self.vtbl_GQ_filtered = self.vt[self.missingness_filter]
         
         ##filtering by MQ and QD, which evaluates
         ##based on the variant table object
