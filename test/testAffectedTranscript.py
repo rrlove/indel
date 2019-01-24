@@ -11,6 +11,7 @@ class AffectedTranscriptTestCase(unittest.TestCase):
             ##mock variant table
             
             records = [[b'3R',101,b'CG',[b'C','',''],2],
+                       [b'3R',180,b'A',[b'AA','',''],2],
                        [b'3R',207,b'A',[b'AT',b'ATT',b'ATTT'],4],
                        [b'3R',220,b'T',[b'TC','',''],2],
                        [b'3R',284,b'A',[b'ACAG',b'ACAGCAG',''],3],
@@ -34,6 +35,7 @@ class AffectedTranscriptTestCase(unittest.TestCase):
             
             self.genotypes = allel.GenotypeArray([
               [[0,0],[1,1],[0,1],[0,1],[0,1],[0,1]],
+              [[1,1],[0,1],[0,1],[0,1],[0,0],[0,0]],
               [[0,1],[2,2],[0,2],[0,2],[0,2],[0,2]],
               [[1,1],[0,0],[0,1],[0,1],[0,1],[0,1]],
               [[2,2],[0,1],[0,2],[1,2],[0,2],[1,2]],
@@ -71,111 +73,58 @@ class AffectedTranscriptTestCase(unittest.TestCase):
                 ('ID','S15'),
                 ('Parent','S15'),
                 ]
-            
-            feature_table_names = tuple(t[0] for t in feature_table_dtype)
-            
+
             self.test_feature_table = \
             allel.FeatureTable(feature_table_data, dtype=feature_table_dtype)
             
-            ##mock IntersectingVariants
-            
-            #self.variants = 
-
-            self.variants = [indel.IntersectingVariant('3R',101),
-                            indel.IntersectingVariant('3R',207),
-                            indel.IntersectingVariant('3R',220),
-                            indel.IntersectingVariant('3R',284),
-                            indel.IntersectingVariant('3R',316),
-                            indel.IntersectingVariant('3R',347)]
-            
-            for variant in self.variants:
-                
-                variant.add_vtbl_record(self.variant_table)
-                variant.add_genos(self.genotypes, self.variant_table)
             
             self.affected_transcript =\
-            indel.AffectedTranscript('3R','gene3-RA')
+            indel.AffectedTranscript(chrom = '3R', name = 'gene3-RA')
             
-        def add_variants_to_transcript(self):
-            
-            for variant in self.variants:
-                
-                self.affected_transcript.add_variant(variant)
+            self.affected_transcript.indices = [0,2,3,4,5,6]
         
-        def test_vtbl_indices(self):
+        def test_vtbl_extraction(self):
             
-            self.add_variants_to_transcript()
-            
-            test_vtbl_indices = [0,1,2,3,4,5]
-            npt.assert_array_equal(test_vtbl_indices, 
-                                   self.affected_transcript.vtbl_indices)
-            
-        def test_n_variants(self):
-            
-            self.add_variants_to_transcript()
-            
-            self.assertEqual(self.affected_transcript.n_variants, 6)
-        
-        def test_empty_vtbl_index_errors_out(self):
-            
-            self.assertRaises(ValueError, 
-                              self.affected_transcript.extract_vtbl, 
-                              self.variant_table)
-
-        def test_extract_vtbl(self):
-            
-            self.add_variants_to_transcript()
-                
             self.affected_transcript.extract_vtbl(self.variant_table)
+            
+            test_pos = [101,207,220,284,316,347]
+            
+            npt.assert_array_equal(self.affected_transcript.vtbl["POS"],
+                                   test_pos)
+            
+        def test_indices_sort(self):
+            
+            self.affected_transcript.indices = [6,0,3,4,5,2]
+            
+            self.affected_transcript.extract_vtbl(self.variant_table)
+            
+            test_pos = [101,207,220,284,316,347]
+            
+            npt.assert_array_equal(self.affected_transcript.vtbl["POS"],
+                                   test_pos)
+            
+        def test_genos_extraction(self):
+            
+            self.affected_transcript.extract_genos(self.genotypes)
+            
+            test_genos = allel.GenotypeArray([
+              [[0,0],[1,1],[0,1],[0,1],[0,1],[0,1]],
+              [[0,1],[2,2],[0,2],[0,2],[0,2],[0,2]],
+              [[1,1],[0,0],[0,1],[0,1],[0,1],[0,1]],
+              [[2,2],[0,1],[0,2],[1,2],[0,2],[1,2]],
+              [[0,0],[1,1],[0,1],[0,1],[0,1],[0,1]],
+              [[1,1],[0,0],[0,1],[0,1],[0,1],[0,1]]
+            ], dtype='i1')
                 
-            test_vtbl = self.variant_table[0:6]
+            npt.assert_array_equal(self.affected_transcript.genos, test_genos)
+        
+        def test_n_exons(self):
+            
+            self.affected_transcript.ranges = np.array([[95,120],
+                                                        [206,296],
+                                                        [310,363]])
                 
-            npt.assert_array_equal(test_vtbl, self.affected_transcript.vtbl)
-                
-        def test_extract_haplotypes(self):
-                        
-            ##TO-DO: what happens if the vtbl indices are negative?
-            ##TO-DO: what happens if some of the genotypes can't be phased?
-            
-            self.affected_transcript.vtbl_indices = [0,3,5,6,7]
-            
-            mock_phased_genotype_array = {
-                    self.affected_transcript.chrom:allel.GenotypeArray(
-                            [[[0,1],[0,0],[1,0],[0,0],[1,0]],
-                             [[1,1],[0,0],[1,0],[1,0],[1,0]],
-                             [[0,0],[0,1],[0,1],[0,0],[0,0]],
-                             [[1,0],[0,0],[0,0],[1,0],[0,0]],
-                             [[0,1],[0,0],[1,0],[0,0],[1,0]],
-                             [[1,1],[0,0],[1,0],[1,0],[1,0]],
-                             [[1,1],[0,0],[1,0],[1,0],[1,0]],
-                             [[1,1],[0,0],[1,0],[1,0],[1,0]]], dtype='i1')}
-            
-            
-            expected_genos_phased = np.array([[[0,1],[0,0],[1,0],[0,0],[1,0]],
-                                             [[1,0],[0,0],[0,0],[1,0],[0,0]],
-                                             [[1,1],[0,0],[1,0],[1,0],[1,0]],
-                                             [[1,1],[0,0],[1,0],[1,0],[1,0]],
-                                             [[1,1],[0,0],[1,0],[1,0],[1,0]]])
-            
-            expected_haplotypes = np.array([[0,1,0,0],
-                                           [1,0,0,0],
-                                           [1,1,0,0],
-                                           [1,1,0,0],
-                                           [1,1,0,0]])
-
-            self.affected_transcript.extract_haplotypes(
-                    mock_phased_genotype_array)
-            
-            npt.assert_array_equal(self.affected_transcript.genos_phased, 
-                                   expected_genos_phased)
-            
-            npt.assert_array_equal(self.affected_transcript.haplotypes, 
-                                   expected_haplotypes)      
-            
-        def test_variants_by_haplotype(self):
-            
-            npt.assert_equal(2,3)
-            ##fix this
+            self.assertEqual(self.affected_transcript.n_exons, 3)
 
 if __name__ =='__main__':
 	unittest.main()
