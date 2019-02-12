@@ -1,9 +1,12 @@
+import numpy as np
+
 class AffectedTranscript():
     
     def __init__(self, chrom, name):
         
         self.chrom = chrom
         self.genos = None
+        self.haplotypes = None
         self.indices = []
         self.name = name
         self.positions = []
@@ -39,3 +42,18 @@ class AffectedTranscript():
             self.indices.sort()
             
             self.genos = genos[[self.indices]]
+            
+    def extract_haplotypes(self):
+        
+        ##check that parental genotypes are phased
+        
+        if not np.sum(np.sum(self.genos.is_phased[:, 0:2], axis=1) == 2) ==\
+            len(self.genos):
+                    
+            raise ValueError("Genotypes are not completely phased")
+        
+        haplotypes_mother = self.genos[:,0].to_haplotypes()
+        haplotypes_father = self.genos[:,1].to_haplotypes()
+        
+        self.haplotypes =\
+        haplotypes_mother.concatenate(haplotypes_father, axis=1)

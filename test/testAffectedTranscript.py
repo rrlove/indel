@@ -125,6 +125,34 @@ class AffectedTranscriptTestCase(unittest.TestCase):
                                                         [310,363]])
                 
             self.assertEqual(self.affected_transcript.n_exons, 3)
-
+            
+        def test_unphased_genos_fail_haplotype_extraction(self):
+            
+            self.affected_transcript.genos = allel.GenotypeArray([
+              [[0,0],[1,1],[0,1],[0,1],[0,1],[0,1]]], dtype='i1')
+                
+            self.affected_transcript.genos.is_phased =\
+            np.array([[False,True,True,True,True,True]])
+            af
+            self.assertRaises(ValueError, 
+                              self.affected_transcript.extract_haplotypes)
+            
+        def test_haplotype_extraction(self):
+            
+            self.affected_transcript.genos = allel.GenotypeArray([
+              [[0,0],[1,1],[0,1],[0,1],[0,1],[0,1]],
+              [[0,1],[2,2],[0,2],[0,2],[0,2],[0,2]]], dtype='i1')
+                
+            self.affected_transcript.genos.is_phased =\
+            np.array([[True, True, True, False, False, True],
+                      [True, True, True, True, True, False]], dtype=bool)
+                
+            self.affected_transcript.extract_haplotypes()
+            
+            test_haplos = np.array([[0,0,1,1],[0,1,2,2]], dtype=np.int8)
+            
+            npt.assert_array_equal(
+                    self.affected_transcript.haplotypes.values, test_haplos)
+                
 if __name__ =='__main__':
 	unittest.main()
