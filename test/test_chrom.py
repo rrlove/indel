@@ -133,7 +133,7 @@ class ChromTestCase(unittest.TestCase):
         pd.DataFrame({'samples': sample_names, 'role': sample_roles,\
                       'sex': sample_sexes})
 
-        self.chrom.ID_positions(
+        self.chrom.id_positions(
             self.test_feature_table[
                 self.test_feature_table["type"] == b'CDS'])
 
@@ -195,11 +195,11 @@ class ChromTestCase(unittest.TestCase):
     def test_quality_filtering(self):
 
         self.chrom.extract_exonic()
-        self.chrom.filter_GQ_MQ_QD(allowed_missing=1)
+        self.chrom.filter_gq_mq_qd(allowed_missing=1)
 
         self.assertEqual(self.chrom.num_present, 6)
-        self.assertEqual(self.chrom.genotypes_GQ_filtered.shape, (7, 6, 2))
-        self.assertEqual(self.chrom.vtbl_GQ_filtered.shape, (7,))
+        self.assertEqual(self.chrom.genotypes_gq_filtered.shape, (7, 6, 2))
+        self.assertEqual(self.chrom.vtbl_gq_filtered.shape, (7,))
 
         self.assertEqual(self.chrom.gt_qual_filtered.shape, (5, 6, 2))
         self.assertEqual(self.chrom.vt_qual_filtered.shape, (5,))
@@ -207,7 +207,7 @@ class ChromTestCase(unittest.TestCase):
     def test_filter_on_parents(self):
 
         self.chrom.extract_exonic()
-        self.chrom.filter_GQ_MQ_QD()
+        self.chrom.filter_gq_mq_qd()
         self.chrom.filter_on_parents()
 
         self.assertEqual(self.chrom.gt_filtered.shape, (3, 6, 2))
@@ -224,9 +224,9 @@ class ChromTestCase(unittest.TestCase):
     def test_autosomal_mendelian_filtering(self):
 
         self.chrom.extract_exonic()
-        self.chrom.filter_GQ_MQ_QD()
+        self.chrom.filter_gq_mq_qd()
         self.chrom.filter_on_parents()
-        self.chrom.ID_autosomal_Mendelian_violations()
+        self.chrom.id_autosomal_mendelian_violations()
 
         expected_autosomal_violations = [0, 0, 1]
         npt.assert_equal(expected_autosomal_violations,
@@ -270,7 +270,7 @@ class ChromTestCase(unittest.TestCase):
 
         expected_gt_violations = [[0, 0], [0, 1], [1, 1], [1, 0]]
 
-        self.chrom.ID_Mendelian_violations_sex(parents_homo_progeny)
+        self.chrom.id_mendelian_violations_sex(parents_homo_progeny)
 
         npt.assert_array_equal(expected_gt_violations,
                                self.chrom.sex_gt_violations)
@@ -283,17 +283,17 @@ class ChromTestCase(unittest.TestCase):
     def test_remove_mendelian_violations_auto(self):
 
         self.chrom.extract_exonic()
-        self.chrom.filter_GQ_MQ_QD()
+        self.chrom.filter_gq_mq_qd()
         self.chrom.filter_on_parents()
-        self.chrom.ID_autosomal_Mendelian_violations()
-        self.chrom.remove_Mendelian_violations()
+        self.chrom.id_autosomal_mendelian_violations()
+        self.chrom.remove_mendelian_violations()
 
         expected_mendel_error_filtered_genos = \
         [[[0, 1], [0, 1], [0, 1], [1, 1], [0, 1], [0, 0]],
          [[0, 0], [1, 1], [0, 1], [0, 1], [0, 1], [0, 1]]]
 
         npt.assert_array_equal(expected_mendel_error_filtered_genos,
-                               self.chrom.gt_Mendel_filtered)
+                               self.chrom.gt_mendel_filtered)
 
     def test_remove_mendelian_violations_sex(self):
 
@@ -320,14 +320,14 @@ class ChromTestCase(unittest.TestCase):
 
         self.chrom.sex_site_violations = np.array([0, 1, 2, 1])
 
-        self.chrom.remove_Mendelian_violations(sex=True)
+        self.chrom.remove_mendelian_violations(sex=True)
 
         expected_mendel_error_filtered_genos = \
         [[[0, 0], [1, 1], [0, 1], [0, 1], [0, 1], [0, 1]]]
 
         npt.assert_array_equal\
         (expected_mendel_error_filtered_genos,
-         self.chrom.gt_Mendel_filtered)
+         self.chrom.gt_mendel_filtered)
 
     def test_phase_catches_misshapen_genos(self):
 
@@ -342,17 +342,17 @@ class ChromTestCase(unittest.TestCase):
                       'sex': sample_sexes})
 
         self.phase_test_chrom.num_present = 11
-        self.phase_test_chrom.gt_Mendel_filtered = \
+        self.phase_test_chrom.gt_mendel_filtered = \
         allel.GenotypeArray([[[0, 0], [0, 1], [0, 1], [0, 0]],
                              [[1, 1], [0, 1], [0, 1], [1, 1]]], dtype='i1')
 
         self.assertRaises(ValueError,
-                          self.phase_test_chrom.phase_and_filter)
+                          self.phase_test_chrom.phase_and_filter_parents)
 
     @unittest.expectedFailure
     def test_phase_output(self):
 
-        self.chrom.gt_Mendel_filtered = \
+        self.chrom.gt_mendel_filtered = \
         allel.GenotypeArray([[[0, 0], [1, 1], [0, 1], [0, 1]],
                              [[0, 1], [0, 1], [0, 1], [0, 1]],
                              [[0, 0], [1, 1], [0, 1], [0, 1]],
@@ -390,12 +390,12 @@ class ChromTestCase(unittest.TestCase):
                  ('REF', 'S100'),
                  ('ALT', 'S100')]
 
-        self.chrom.vt_Mendel_filtered = \
+        self.chrom.vt_mendel_filtered = \
         allel.VariantTable(records, dtype=dtype, index=('CHROM', 'POS'))
 
         self.chrom.num_present = 4
 
-        self.chrom.phase_and_filter(window=10)
+        self.chrom.phase_and_filter_parents(window=10)
 
         expected_phased_bool = \
         [True, False, True, False, True, False, True, True, False,
@@ -404,7 +404,7 @@ class ChromTestCase(unittest.TestCase):
         expected_genos_shape = [10, 4]
         expected_vt_shape = [10,]
 
-        npt.assert_array_equal(expected_phased_bool, self.chrom.phased_Bool)
+        npt.assert_array_equal(expected_phased_bool, self.chrom.phased_bool)
         self.assertEqual(expected_genos_shape, self.chrom.phased_genos)
         self.assertEqual(expected_vt_shape, self.chrom.vt_phased)
 

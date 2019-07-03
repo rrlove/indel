@@ -51,7 +51,7 @@ class Chrom():
                 raise ValueError("non-progeny sample with index {i}".format(
                     i=i))
 
-    def ID_positions(self, feature_table):
+    def id_positions(self, feature_table):
 
         '''take a feature table filtered down to entries of interest,
         return a boolean of positions in the callset that overlap those
@@ -93,10 +93,10 @@ class Chrom():
             raise ValueError(("Genotypes, genotype qualities, and "
                               + "variant table do not have the same length"))
 
-    def filter_GQ_MQ_QD(self,
-                        min_GQ=20,
-                        min_QD=15,
-                        min_MQ=40,
+    def filter_gq_mq_qd(self,
+                        min_gq=20,
+                        min_qd=15,
+                        min_mq=40,
                         allowed_missing=0):
         '''return a set of genotypes and variants where genotypes below the
         minimum genotype quality (GQ) are masked, and sites below the minimum
@@ -105,7 +105,7 @@ class Chrom():
         '''
 
         # Hide genotypes of poor quality, so they register as missing
-        self.genotypes.mask = self.gq < min_GQ
+        self.genotypes.mask = self.gq < min_gq
 
         # How many samples have to be called for a site to pass?
         self.num_present = self.gq.shape[1]
@@ -117,22 +117,22 @@ class Chrom():
         np.sum(self.genotypes.is_called(), axis=1) >= min_called
 
         # Filter the genotypes and variant table to keep only these sites
-        self.genotypes_GQ_filtered =\
+        self.genotypes_gq_filtered =\
         self.genotypes.subset(sel0=self.missingness_filter)
-        self.vtbl_GQ_filtered = self.vt[self.missingness_filter]
+        self.vtbl_gq_filtered = self.vt[self.missingness_filter]
 
         # Filtering by MQ and QD, which evaluates on the variant table
 
         self.filter_expression = '( (MQ >= {MQ}) & (QD >= {QD}) )'.format(
-            MQ=min_MQ, QD=min_QD)
+            MQ=min_mq, QD=min_qd)
 
         self.variant_qual_bool =\
-        self.vtbl_GQ_filtered.eval(self.filter_expression)
+        self.vtbl_gq_filtered.eval(self.filter_expression)
 
         self.gt_qual_filtered =\
-        self.genotypes_GQ_filtered.subset(sel0=self.variant_qual_bool)
+        self.genotypes_gq_filtered.subset(sel0=self.variant_qual_bool)
 
-        self.vt_qual_filtered = self.vtbl_GQ_filtered[self.variant_qual_bool]
+        self.vt_qual_filtered = self.vtbl_gq_filtered[self.variant_qual_bool]
 
     def filter_on_parents(self):
 
@@ -155,7 +155,7 @@ class Chrom():
 
         self.vt_filtered = self.vt_parents_called[self.segregating]
 
-    def ID_autosomal_Mendelian_violations(self):
+    def id_autosomal_mendelian_violations(self):
 
         self.check_metadata_parental()
 
@@ -166,7 +166,7 @@ class Chrom():
     def filter_heterozygous_heterogametes(self, heterogametic, error_tol=0):
 
         '''This method should only be run on the sex chromosome. It is part of
-        the filtering process with ID_Mendelian_violations_sex.
+        the filtering process with id_mendelian_violations_sex.
 
         Because the heterogametic sex only has one
         copy of each sex chromosome, any heterozygous genotypes on the sex
@@ -196,7 +196,7 @@ class Chrom():
 
         self.vt_het_error_filtered = self.vt_filtered[self.het_errors_bool]
 
-    def ID_Mendelian_violations_sex(self, parents_homo_progeny):
+    def id_mendelian_violations_sex(self, parents_homo_progeny):
         '''parents_homo_progeny is an array holding the indices of the parental
         samples plus the samples homogametic for the sex chromosome (in the
         case of Anopheles, females)
@@ -219,39 +219,38 @@ class Chrom():
 
         self.sex_site_violations = np.sum(self.sex_gt_violations, axis=1)
 
-    def remove_Mendelian_violations(self, permitted_violations=0, sex=False):
+    def remove_mendelian_violations(self, permitted_violations=0, sex=False):
 
         if sex is True:
 
-            self.Mendel_bool =\
+            self.mendel_bool =\
             self.sex_site_violations <= permitted_violations
 
-            self.vt_Mendel_filtered =\
-            self.vt_het_error_filtered[self.Mendel_bool]
+            self.vt_mendel_filtered =\
+            self.vt_het_error_filtered[self.mendel_bool]
 
-            self.gt_Mendel_filtered =\
-            self.gt_het_error_filtered.subset(sel0=self.Mendel_bool)
+            self.gt_mendel_filtered =\
+            self.gt_het_error_filtered.subset(sel0=self.mendel_bool)
 
         elif sex is False:
 
-            self.Mendel_bool =\
+            self.mendel_bool =\
             self.auto_site_violations <= permitted_violations
 
-            self.vt_Mendel_filtered = self.vt_filtered[self.Mendel_bool]
+            self.vt_mendel_filtered = self.vt_filtered[self.mendel_bool]
 
-            self.gt_Mendel_filtered =\
-            self.gt_filtered.subset(sel0=self.Mendel_bool)
+            self.gt_mendel_filtered =\
+            self.gt_filtered.subset(sel0=self.mendel_bool)
 
-    def phase_and_filter(self, parental_only=True,
-                         permitted_nonphased=0, window=25):
+    def phase_and_filter_parents(self, permitted_nonphased=0, window=25):
 
         self.check_metadata_parental()
 
         self.phased =\
         allel.phase_by_transmission(
-            self.gt_Mendel_filtered, window_size=window)
+            self.gt_mendel_filtered, window_size=window)
 
-        if not self.num_present == self.gt_Mendel_filtered.shape[1]:
+        if not self.num_present == self.gt_mendel_filtered.shape[1]:
 
             raise ValueError(
                 ("You have a different number of samples"
@@ -263,19 +262,19 @@ class Chrom():
         self.phased_genos = self.phased.subset(sel0=self.parents_phased_bool)
 
         self.unphased_genos_at_phased_site = \
-        self.gt_Mendel_filtered.subset(sel0=self.parents_phased_bool)
+        self.gt_mendel_filtered.subset(sel0=self.parents_phased_bool)
 
-        self.vt_phased = self.vt_Mendel_filtered[self.parents_phased_bool]
+        self.vt_phased = self.vt_mendel_filtered[self.parents_phased_bool]
 
         if permitted_nonphased < len(self.metadata):
 
-            self.phased_Bool = (np.sum(self.phased_genos.is_phased, axis=1) >=
+            self.phased_bool = (np.sum(self.phased_genos.is_phased, axis=1) >=
                                 (self.num_present - permitted_nonphased))
 
-            self.phased_genos = self.phased_genos.subset(sel0=self.phased_Bool)
+            self.phased_genos = self.phased_genos.subset(sel0=self.phased_bool)
 
             self.unphased_genos_at_phased_site = \
-            self.gt_Mendel_filtered.subset(sel0=self.phased_Bool)
+            self.gt_mendel_filtered.subset(sel0=self.phased_bool)
 
-            self.vt_phased = self.vt_Mendel_filtered[self.phased_Bool]
+            self.vt_phased = self.vt_mendel_filtered[self.phased_bool]
     
