@@ -24,7 +24,7 @@ class Chrom():
         self.vt = allel.VariantChunkedTable(self.callset["variants"])[:]
 
     def read_metadata(self, path_to_metadata):
-        self.metadata = pd.read_table(path_to_metadata)
+        self.metadata = pd.read_csv(path_to_metadata, sep="\t")
 
         if not len(self.metadata) == self.callset["samples"].shape[0]:
 
