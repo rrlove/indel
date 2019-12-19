@@ -221,7 +221,7 @@ class Chrom():
 
     def remove_mendelian_violations(self, permitted_violations=0, sex=False):
 
-        if sex is True:
+        if sex:
 
             self.mendel_bool =\
             self.sex_site_violations <= permitted_violations
@@ -232,7 +232,7 @@ class Chrom():
             self.gt_mendel_filtered =\
             self.gt_het_error_filtered.subset(sel0=self.mendel_bool)
 
-        elif sex is False:
+        elif not sex:
 
             self.mendel_bool =\
             self.auto_site_violations <= permitted_violations
