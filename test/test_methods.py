@@ -97,7 +97,8 @@ class TestWorkflow(unittest.TestCase):
                                                       self.variant_table,
                                                       self.positions,
                                                       self.genotypes,
-                                                      self.feature_table)
+                                                      self.feature_table,
+                                                      "CDS")
 
     def test_ranges(self):
 

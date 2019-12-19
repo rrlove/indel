@@ -18,6 +18,11 @@ class AffectedTranscript():
     def n_exons(self):
 
         return len(self.ranges)
+    
+    def add_indices(self, indices):
+        
+        self.indices = indices
+        self.indices.sort()
 
     def extract_vtbl(self, vtbl):
 
