@@ -83,6 +83,20 @@ class AffectedTranscriptTestCase(unittest.TestCase):
         indel.AffectedTranscript(chrom='3R', name='gene3-RA')
 
         self.affected_transcript.indices = [0, 2, 3, 4, 5, 6]
+        
+    def test_empty_indices_vtbl(self):
+        
+        self.affected_transcript.indices = None
+        
+        self.assertRaises(ValueError, self.affected_transcript.extract_vtbl,
+                          self.variant_table)
+        
+    def test_empty_indices_genos(self):
+        
+        self.affected_transcript.indices = None
+        
+        self.assertRaises(ValueError, self.affected_transcript.extract_genos,
+                          self.genotypes)
 
     def test_vtbl_extraction(self):
 

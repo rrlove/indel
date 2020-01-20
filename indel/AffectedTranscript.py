@@ -8,16 +8,21 @@ class AffectedTranscript():
         self.chrom = chrom
         self.genos = None
         self.haplotypes = None
-        self.indices = []
+        self.indices = None
         self.name = name
-        self.positions = []
-        self.ranges = []
+        self.positions = None
+        self.ranges = None
         self.vtbl = None
 
     @property
     def n_exons(self):
 
         return len(self.ranges)
+    
+    @property
+    def n_indels(self):
+        
+        return np.sum(~ self.vtbl["is_snp"])
     
     def add_indices(self, indices):
         
@@ -26,7 +31,7 @@ class AffectedTranscript():
 
     def extract_vtbl(self, vtbl):
 
-        if len(self.indices) <= 0:
+        if self.indices is None:
 
             raise ValueError("This transcript has no associated variants")
 
@@ -37,7 +42,7 @@ class AffectedTranscript():
 
     def extract_genos(self, genos):
 
-        if len(self.indices) <= 0:
+        if self.indices is None:
 
             raise ValueError("This transcript has no associated variants")
 
