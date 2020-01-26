@@ -328,7 +328,130 @@ class ChromTestCase(unittest.TestCase):
         npt.assert_array_equal\
         (expected_mendel_error_filtered_genos,
          self.chrom.gt_mendel_filtered)
+        
+    def test_filter_on_type_snp(self):
+        
+        records = [[b'2L', 10, 'A', 'T', True],
+                   [b'2L', 20, 'GGG', 'G', False],
+                   [b'2L', 30, 'C', 'T', True],
+                   [b'2L', 49, 'CTGCTGC', 'C', False],
+                   [b'2L', 110, 'G', 'A', True],
+                   [b'2L', 300, 'TT', 'T', False],
+                   [b'2L', 351, 'T', 'TTT', False]]
 
+        dtype = [('CHROM', 'S4'),
+                 ('POS', 'u4'),
+                 ('REF', 'S100'),
+                 ('ALT', 'S100'),
+                 ('is_snp', '?')]
+        
+        vt = allel.VariantTable(records, dtype=dtype, 
+                                                  index=('CHROM','POS'))
+        
+        self.chrom.vt_phased = vt
+        
+        self.chrom.vt_mendel_filtered = vt
+            
+        gt = \
+        allel.GenotypeArray([
+            [[0, 0], [1, 1], [0, 1], [0, 1]],
+            [[0, 0], [1, 1], [0, 1], [1, 1]],
+            [[1, 1], [0, 0], [1, 1], [1, 1]],
+            [[0, 0], [1, 1], [0, 0], [0, 1]],
+            [[0, 0], [1, 1], [0, 1], [0, 1]],
+            [[1, 1], [0, 0], [0, 1], [0, 1]],
+            [[1, 1], [0, 0], [0, 1], [0, 1]]
+            ], dtype='i1')
+        
+        self.chrom.phased_genos = gt
+        
+        self.chrom.gt_mendel_filtered = gt
+        
+        self.chrom.filter_on_type(variant_type = "SNP")
+        
+        result_records = [[b'2L', 10, 'A', 'T', True],
+                   [b'2L', 30, 'C', 'T', True],
+                   [b'2L', 110, 'G', 'A', True]]
+        
+        result_vt = allel.VariantTable(result_records, dtype=dtype, 
+                                                  index=('CHROM','POS'))
+        
+        result_genos = \
+        allel.GenotypeArray([
+            [[0, 0], [1, 1], [0, 1], [0, 1]],
+            [[1, 1], [0, 0], [1, 1], [1, 1]],
+            [[0, 0], [1, 1], [0, 1], [0, 1]]
+            ], dtype='i1')
+        
+        npt.assert_array_equal(self.chrom.vt_filtered, result_vt)
+        
+        npt.assert_array_equal(self.chrom.gt_filtered, result_genos)
+
+    def test_filter_on_type_indel(self):
+        
+        records = [[b'2L', 10, 'A', 'T', True],
+                   [b'2L', 20, 'GGG', 'G', False],
+                   [b'2L', 30, 'C', 'T', True],
+                   [b'2L', 49, 'CTGCTGC', 'C', False],
+                   [b'2L', 110, 'G', 'A', True],
+                   [b'2L', 300, 'TT', 'T', False],
+                   [b'2L', 351, 'T', 'TTT', False]]
+
+        dtype = [('CHROM', 'S4'),
+                 ('POS', 'u4'),
+                 ('REF', 'S100'),
+                 ('ALT', 'S100'),
+                 ('is_snp', '?')]
+        
+        vt = allel.VariantTable(records, dtype=dtype, 
+                                                  index=('CHROM','POS'))
+        
+        self.chrom.vt_phased = vt
+        
+        self.chrom.vt_mendel_filtered = vt
+            
+        gt = \
+        allel.GenotypeArray([
+            [[0, 0], [1, 1], [0, 1], [0, 1]],
+            [[0, 0], [1, 1], [0, 1], [1, 1]],
+            [[1, 1], [0, 0], [1, 1], [1, 1]],
+            [[0, 0], [1, 1], [0, 0], [0, 1]],
+            [[0, 0], [1, 1], [0, 1], [0, 1]],
+            [[1, 1], [0, 0], [0, 1], [0, 1]],
+            [[1, 1], [0, 0], [0, 1], [0, 1]]
+            ], dtype='i1')
+        
+        self.chrom.phased_genos = gt
+        
+        self.chrom.gt_mendel_filtered = gt
+        
+        self.chrom.filter_on_type(variant_type = "indel")
+        
+        result_records = [[b'2L', 20, 'GGG', 'G', False],
+                   [b'2L', 49, 'CTGCTGC', 'C', False],
+                   [b'2L', 300, 'TT', 'T', False],
+                   [b'2L', 351, 'T', 'TTT', False]]
+        
+        result_vt = allel.VariantTable(result_records, dtype=dtype, 
+                                                  index=('CHROM','POS'))
+        
+        result_genos = \
+        allel.GenotypeArray([
+            [[0, 0], [1, 1], [0, 1], [1, 1]],
+            [[0, 0], [1, 1], [0, 0], [0, 1]],
+            [[1, 1], [0, 0], [0, 1], [0, 1]],
+            [[1, 1], [0, 0], [0, 1], [0, 1]]
+            ], dtype='i1')
+        
+        npt.assert_array_equal(self.chrom.vt_filtered, result_vt)
+        
+        npt.assert_array_equal(self.chrom.gt_filtered, result_genos)
+
+    def test_filter_on_type_catches_bad_type(self):
+        
+        self.assertRaises(ValueError,
+                          self.chrom.filter_on_type, variant_type = "duck")
+        
     def test_phase_catches_misshapen_genos(self):
 
         self.phase_test_chrom = indel.Chrom("3L", "fake_path")

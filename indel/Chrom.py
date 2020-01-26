@@ -22,7 +22,7 @@ class Chrom():
         self.gq = self.callset["calldata/GQ"][:]
 
         self.vt = allel.VariantChunkedTable(self.callset["variants"])[:]
-
+        
     def read_metadata(self, path_to_metadata):
         self.metadata = pd.read_csv(path_to_metadata, sep="\t")
 
@@ -63,7 +63,7 @@ class Chrom():
 
         try:
             self.all_positions =\
-            allel.SortedIndex(self.callset["variants"]["POS"])
+            allel.SortedIndex(self.vt["POS"])
 
         except ValueError:
             print("Load one chromosome at a time")
@@ -277,4 +277,33 @@ class Chrom():
             self.gt_mendel_filtered.subset(sel0=self.phased_bool)
 
             self.vt_phased = self.vt_mendel_filtered[self.phased_bool]
+            
+    def filter_on_type(self, variant_type):
+        
+        if variant_type == "SNP":
+                
+            variant_type_bool_phased = self.vt_phased["is_snp"]
+            
+            variant_type_bool_unphased = self.vt_mendel_filtered["is_snp"]
+                
+        elif variant_type == "indel":
+                
+            variant_type_bool_phased = (~ self.vt_phased["is_snp"])
+            
+            variant_type_bool_unphased = (~ self.vt_mendel_filtered["is_snp"])
+
+                
+        else:
+                
+            raise ValueError("variant_type must be 'SNP' or 'indel'" +
+                                 variant_type)
+                
+        self.vt_filtered = self.vt_phased[variant_type_bool_phased]
+        self.gt_filtered = self.phased_genos.subset(
+                sel0 = variant_type_bool_phased)
+        
+        self.vt_mendel_filtered = \
+        self.vt_mendel_filtered[variant_type_bool_unphased]
+        self.gt_mendel_filtered = self.gt_mendel_filtered.subset(
+                sel0 = variant_type_bool_unphased)
     
