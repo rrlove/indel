@@ -298,8 +298,8 @@ class Chrom():
             raise ValueError("variant_type must be 'SNP' or 'indel'" +
                                  variant_type)
                 
-        self.vt_filtered = self.vt_phased[variant_type_bool_phased]
-        self.gt_filtered = self.phased_genos.subset(
+        self.vt_phased = self.vt_phased[variant_type_bool_phased]
+        self.phased_genos = self.phased_genos.subset(
                 sel0 = variant_type_bool_phased)
         
         self.vt_mendel_filtered = \

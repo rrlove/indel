@@ -383,9 +383,9 @@ class ChromTestCase(unittest.TestCase):
             [[0, 0], [1, 1], [0, 1], [0, 1]]
             ], dtype='i1')
         
-        npt.assert_array_equal(self.chrom.vt_filtered, result_vt)
+        npt.assert_array_equal(self.chrom.vt_phased, result_vt)
         
-        npt.assert_array_equal(self.chrom.gt_filtered, result_genos)
+        npt.assert_array_equal(self.chrom.phased_genos, result_genos)
 
     def test_filter_on_type_indel(self):
         
@@ -443,9 +443,9 @@ class ChromTestCase(unittest.TestCase):
             [[1, 1], [0, 0], [0, 1], [0, 1]]
             ], dtype='i1')
         
-        npt.assert_array_equal(self.chrom.vt_filtered, result_vt)
+        npt.assert_array_equal(self.chrom.vt_phased, result_vt)
         
-        npt.assert_array_equal(self.chrom.gt_filtered, result_genos)
+        npt.assert_array_equal(self.chrom.phased_genos, result_genos)
 
     def test_filter_on_type_catches_bad_type(self):
         
