@@ -7,6 +7,7 @@ Created on Tue Mar 24 18:17:21 2020
 """
 
 import unittest
+import os
 
 import numpy as np
 import numpy.testing as npt
@@ -14,6 +15,8 @@ import pandas as pd
 
 import allel
 import indel
+
+CWD = os.path.dirname(os.path.abspath(__file__))
 
 class IntegrationTestsAuto(unittest.TestCase):
 
@@ -53,7 +56,7 @@ class IntegrationTestsAuto(unittest.TestCase):
         
         self.name = "2L"
         
-        self.path = "int_test_auto.h5"
+        self.path = os.path.join(CWD, "int_test_auto.h5")
         
         self.dtypes = [('CHROM', 'S4'),
                        ('POS', 'u4'),
@@ -69,7 +72,7 @@ class IntegrationTestsAuto(unittest.TestCase):
         
         ##this tests the cross workflow with default quality filters, 
         ##retaining indels
-        
+                
         genotypes, vt = indel.cross_workflow(self.name, self.path, 
                                              self.test_cds)
         
@@ -229,7 +232,7 @@ class IntegrationTestsSex(unittest.TestCase):
         
         self.name = "X"
         
-        self.path = "./int_test_X.h5"
+        self.path = os.path.join(CWD, "int_test_X.h5")
         
         self.dtypes = [('CHROM', 'S4'),
                        ('POS', 'u4'),
@@ -336,3 +339,6 @@ class IntegrationTestsSex(unittest.TestCase):
         ##compare expected and actual outputs
         npt.assert_array_equal(genotypes, expected_genotypes)
         npt.assert_array_equal(vt, expected_vt)
+
+if __name__ == '__main__':
+    unittest.main()
