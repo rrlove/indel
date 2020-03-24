@@ -15,7 +15,7 @@ import pandas as pd
 import allel
 import indel
 
-class ChromTestCase(unittest.TestCase):
+class MethodsTestCase(unittest.TestCase):
 
     def setUp(self):
 
@@ -467,6 +467,132 @@ class ChromTestCase(unittest.TestCase):
         self.assertRaises(ValueError,
                           indel.filter_on_type, self.genotypes, self.vt, 
                           variant_type = "duck")
+
+class IntegrationTest(unittest.TestCase):
+
+    def setUp(self):
+
+        ##mock genotype qualities
+        self.gq = np.array([[27, 23, 19, 21, 15, 24],
+                       [28, 21, 23, 20, 29, 25],
+                       [32, 20, 29, 31, 30, 20],
+                       [21, 27, 29, 32, 30, 33],
+                       [22, 23, 29, 30, 27, 21],
+                       [21, 24, 26, 27, 26, 25],
+                       [20, 32, 29, 31, 30, 28],
+                       [27, 26, 25, 24, 30, 31],
+                       [25, 24, 32, 31, 28, 25]])
+
+        ##one variant to get filtered out by GQ
+        ##one variant to get filtered out as non-CDS
+        ##one variant to get filtered out as Mendelian error
+        ##one variant to get filtered out by MQ
+        ##one variant to get filtered out by QD
+        ##one variant to get filtered out as non-seg
+        ##one variant to get filtered out with a missing parent
+        ##two variants to rule them all, and in the darkness bind them
+
+        ##mock genotypes
+        self.genotypes =\
+        allel.GenotypeArray(
+            [[[0, 0], [1, 1], [0, 1], [0, 1], [0, 1], [0, 1]],
+             [[0, 0], [0, 1], [0, 1], [0, 0], [0, 1], [0, 0]],
+             [[1, 1], [0, 1], [0, 1], [1, 1], [0, 1], [1, 1]],
+             ##the variant below is filtered out as non-segregating
+             [[1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1]],
+             [[0, 1], [0, 1], [0, 0], [0, 1], [1, 1], [0, 1]],
+             [[0, 1], [0, 1], [0, 1], [1, 1], [0, 1], [0, 0]],
+             [[0, 0], [1, 1], [0, 1], [0, 1], [0, 1], [0, 1]],
+             ##the variant below is filtered out as a Mendelian error
+             [[0, 1], [1, 1], [0, 0], [1, 1], [1, 1], [1, 1]],
+             ##the variant below is filtered out as missing parent
+             [[-1, -1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1]]
+             ], dtype='i1')
+
+        ##mock variant table
+        ##default min QD 15
+        ##default min MQ 40
+        ##variants filtered out:1 (GQ),
+        ##2 (QD),
+        ##3 (non-CDS),
+        ##4 (non-seg),
+        ##5 (MQ),
+        ##8 (Mendelian error),
+        ##9 (missing parent)
+        records = [(b'2L', 20, b'A', b'ATC', 15, 35.7, 45, (6, 6)),
+                   ##the variant below gets filtered out for QD
+                   (b'2L', 53, b'CG', b'C', 18, 14, 45, (9, 3)),
+                   ##the variant below is filtered out as non-CDS
+                   (b'2L', 207, b'ATATA', b'A', 13, 29.2, 41, (3, 9)),
+                   (b'2L', 602, b'TCTCT', b'T', 27, 16, 41, (0, 12)),
+                   ##the variant below is filtered out for MQ
+                   (b'2L', 754, b'TCTGT', b'TC', 18, 33.2, 29, (6, 6)),
+                   (b'2L', 1090, b'G', b'GTTT', 17, 31.4, 43, (6, 6)),
+                   (b'2L', 1114, b'GCAT', b'G', 20, 37.2, 44, (6, 6)),
+                   (b'2L', 1129, b'T', b'TTTT', 32, 15, 40, (3, 9)),
+                   (b'2L', 1150, b'AAA', b'A', 30, 20, 45, (0, 10))
+                  ]
+
+        dtype = [('CHROM', 'S4'),
+                 ('POS', 'u4'),
+                 ('REF', 'S100'),
+                 ('ALT', 'S100'),
+                 ('DP', int),
+                 ('QD', float),
+                 ('MQ', int),
+                 ('AC', (int, 2))]
+
+        self.vt = allel.VariantTable(records,
+                                dtype=dtype, index=('CHROM', 'POS'))
+
+        self.callset = {"variants": self.vt, 
+                        "calldata/genotype": self.genotypes,
+                        "calldata/GQ": self.gq}
+
+        ##mock feature table
+        feature_table_data = [
+            ["2L", "DB", b'gene', 15, 2000, -1, "+", -1, "gene1", "."],
+            ["2L", "DB", b'CDS', 17, 77, -1, "+", 0, "gene1-PA", "gene1-RA"],
+            ["2L", "DB", b'CDS', 569, 803, -1, "+", 2, "gene1-PA", "gene1-RA"],
+            ["2L", "DB", b'CDS', 1001, 1166, -1, "+", 2, "gene1-PA", 
+             "gene1-RA"],
+            ]
+
+        feature_table_dtype = [
+            ('seqid', 'S4'),
+            ('source', 'S2'),
+            ('type', 'S15'),
+            ('start', int),
+            ('end', int),
+            ('score', '<f8'),
+            ('strand', 'S1'),
+            ('phase', '<i8'),
+            ('ID', 'S15'),
+            ('Parent', 'S15'),
+            ]
+
+        feature_table_names = tuple(t[0] for t in feature_table_dtype)
+
+        self.test_feature_table = \
+        allel.FeatureTable(feature_table_data, names=feature_table_names)
+        
+        self.test_cds = \
+        self.test_feature_table[self.test_feature_table.type == b'CDS']
+
+        ##mock metadata
+        sample_names = pd.Series(["A", "B", "C", "D", "E", "F"])
+        sample_roles = \
+        pd.Series(["parent", "parent", "progeny",
+                   "progeny", "progeny", "progeny"])
+        sample_sexes = pd.Series(["F", "M", "F", "M", "F", "M"])
+        
+        metadata = \
+        pd.DataFrame({'samples': sample_names, 'role': sample_roles,\
+                      'sex': sample_sexes})
+        
+        self.name = "2L"
+
+
 
 '''class TestWorkflow(unittest.TestCase):
 

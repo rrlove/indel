@@ -7,6 +7,15 @@ import pandas as pd
 
 #from indel import AffectedTranscript
 
+class ZeroVariantError(Exception):
+    pass
+
+def check_shape(genotypes, vt):
+    
+    if genotypes.shape[0] == 0 or vt.shape[0] == 0:
+        
+        raise ZeroVariantError("all variants have been filtered out")
+
 def read_calls(path, name):
     
     callset = h5py.File(path, mode='r')[name]
@@ -19,9 +28,9 @@ def read_calls(path, name):
     
     return(callset, genotypes, gq, vt)
     
-def read_metadata(path_to_metadata, check_parental=False):
+def read_metadata(path_to_metadata, check_parental=False, sep="\t"):
 
-    metadata = pd.read_csv(path_to_metadata, sep="\t")
+    metadata = pd.read_csv(path_to_metadata, sep=sep)
 
     if check_parental:
 
@@ -56,6 +65,10 @@ def id_positions(name, vt, feature_table):
         region_feature.start,
         region_feature.end)
     
+    if not np.sum(positions) > 0:
+        
+        raise ZeroVariantError("no positions overlap")
+    
     return(positions, overlapped_features)
     
 def extract_positions(genotypes, gq, vt, positions_bool):
@@ -64,6 +77,8 @@ def extract_positions(genotypes, gq, vt, positions_bool):
     associated genotype qualities, and a variant table
     of the exonic positions
     '''
+    
+    check_shape(genotypes, vt)
 
     genotypes = genotypes.subset(sel0=positions_bool)
 
@@ -87,6 +102,8 @@ def filter_quality(genotypes, gq, vt, min_gq=20, min_qd=15, min_mq=40,
     map quality (MQ), depth-adjusted quality score (QD), and missingness
     (allowed_missing) are filtered out
     '''
+
+    check_shape(genotypes, vt)
 
     # Hide genotypes of poor quality, so they register as missing
     genotypes.mask = gq < min_gq
@@ -118,7 +135,9 @@ def filter_quality(genotypes, gq, vt, min_gq=20, min_qd=15, min_mq=40,
     return(genotypes_qual_filtered, vt_qual_filtered)
     
 def filter_on_parents(genotypes, vt):
-
+    
+    check_shape(genotypes, vt)
+    
     # Remove sites with missing parents
     parents_called = np.all(genotypes[:, :2].is_called(), axis=1)
 
@@ -159,6 +178,8 @@ def filter_heterozygous_heterogametes(genotypes, vt, heterogametic,
     you should be able to check every sample on the sex chromosome,
     whether heterogametic or not.
     '''
+    
+    check_shape(genotypes, vt)
 
     het_errors = np.sum(genotypes[:, heterogametic].is_het(), axis=1)
 
@@ -171,7 +192,11 @@ def filter_heterozygous_heterogametes(genotypes, vt, heterogametic,
     return(gt_het_error_filtered, vt_het_error_filtered)
     
 def id_mendelian_violations(genotypes, sex=False, parents_homo_progeny=None):
-
+    
+    if genotypes.shape[0] == 0:
+        
+        raise ZeroVariantError("all variants have been filtered out")
+    
     if sex:
         
         if parents_homo_progeny is None:
@@ -196,6 +221,8 @@ def id_mendelian_violations(genotypes, sex=False, parents_homo_progeny=None):
 def remove_mendelian_violations(genotypes, vt, site_violations, 
                                 permitted_violations=0):
 
+    check_shape(genotypes, vt)
+    
     mendel_bool = site_violations <= permitted_violations
 
     vt_mendel_filtered = vt[mendel_bool]
@@ -205,6 +232,8 @@ def remove_mendelian_violations(genotypes, vt, site_violations,
     return(genotypes_mendel_filtered, vt_mendel_filtered)
 
 def phase_and_filter_parents(genotypes, vt, window=25):
+    
+    check_shape(genotypes, vt)
 
     phased = allel.phase_by_transmission(genotypes, window_size=window)
 
@@ -220,6 +249,8 @@ def phase_and_filter_parents(genotypes, vt, window=25):
     return(genotypes_phased, vt_phased)
     
 def filter_on_type(genotypes, vt, variant_type):
+    
+    check_shape(genotypes, vt)
 
     if variant_type == "SNP":
 
@@ -238,7 +269,65 @@ def filter_on_type(genotypes, vt, variant_type):
     genotypes_filtered = genotypes.subset(sel0 = variant_type_bool)
     
     return(genotypes_filtered, vt_filtered)
+    
+def cross_workflow(name, callset_path, features, filter_on="indel", 
+                   phased=False, sex=False,
+                   hets=None, X_phasing=None, min_gq=20, min_qd=15, min_mq=40, 
+                   allowed_missing=0):
+    
+    callset, genotypes, gq, vt = read_calls(callset_path, name)
+    
+    positions, overlapped_features = id_positions(name, vt, features)
 
+    genotypes, gq, vt = extract_positions(genotypes, gq, vt, positions)
+    
+    genotypes, vt = filter_quality(genotypes, gq, vt, min_gq=min_gq, 
+                                   min_qd=min_qd, min_mq=min_mq, 
+                                   allowed_missing=allowed_missing)
+    
+    genotypes, vt = filter_on_parents(genotypes, vt)
+    
+    if sex:
+        
+        if hets is None:
+            
+            raise ValueError("must pass indices of heterogametic samples")
+            
+        else:
+            
+            genotypes, vt = filter_heterozygous_heterogametes(genotypes, vt, 
+                                                              hets)
+    
+        mendelian_violations = id_mendelian_violations(genotypes, sex=True, 
+                                                       parents_homo_progeny=\
+                                                       X_phasing)
+
+    else:
+        
+        mendelian_violations = id_mendelian_violations(genotypes)
+        
+    genotypes, vt = remove_mendelian_violations(genotypes, vt, 
+                                                mendelian_violations)
+    
+    if phased:
+        
+        genotypes, vt = phase_and_filter_parents(genotypes, vt)
+    
+    genotypes, vt = filter_on_type(genotypes, vt, variant_type=filter_on)
+    
+    return(genotypes, vt)
+
+def wild_workflow(name, callset_path, features, filter_on="indel"):
+    
+    callset, genotypes, gq, vt = read_calls(callset_path, name)
+    
+    positions, overlapped_features = id_positions(name, vt, features)
+
+    genotypes, gq, vt = extract_positions(genotypes, gq, vt, positions)
+        
+    genotypes, vt = filter_on_type(genotypes, vt, variant_type=filter_on)
+    
+    return(genotypes, vt)
 
 '''def run_workflow(chrom, name, variant_table, positions,
                  genotypes, feature_table, feature_type):
