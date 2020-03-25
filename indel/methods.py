@@ -5,7 +5,7 @@ import h5py
 import numpy as np
 import pandas as pd
 
-#from indel import AffectedTranscript
+from indel import AffectedTranscript
 
 class ZeroVariantError(Exception):
     pass
@@ -329,7 +329,7 @@ def wild_workflow(name, callset_path, features, filter_on="indel"):
     
     return(genotypes, vt)
 
-'''def run_workflow(chrom, name, variant_table, positions,
+def transcript_workflow(chrom, name, variant_table, positions,
                  genotypes, feature_table, feature_type):
     
     if feature_type == "CDS":
@@ -363,4 +363,4 @@ def wild_workflow(name, callset_path, features, filter_on="indel"):
 
         transcript.extract_genos(genotypes)
 
-    return transcript'''
+    return transcript
