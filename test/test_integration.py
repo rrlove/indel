@@ -9,9 +9,7 @@ Created on Tue Mar 24 18:17:21 2020
 import unittest
 import os
 
-import numpy as np
 import numpy.testing as npt
-import pandas as pd
 
 import allel
 import indel
@@ -193,6 +191,74 @@ class IntegrationTestsAuto(unittest.TestCase):
         ##compare expected and actual outputs
         npt.assert_array_equal(genotypes, expected_genotypes)
         npt.assert_array_equal(vt, expected_vt)
+        
+    def test_6(self):
+        
+        ##this tests the cross workflow, retaining all variants
+        
+        genotypes, vt = indel.cross_workflow(self.name, self.path, 
+                                             self.test_cds, filter_on="all")
+        
+        expected_genotypes = allel.GenotypeArray(
+                [[[1, 1], [0, 1], [0, 1], [1, 1], [0, 1], [1, 1]],
+                 [[0, 1], [0, 1], [0, 1], [1, 1], [0, 1], [0, 0]],
+                 [[0, 0], [1, 1], [0, 1], [0, 1], [0, 1], [0, 1]],
+                 [[0, 0], [0, 1], [0, 0], [0, 1], [0, 0], [0, 1]]
+                 ], dtype='i1')
+
+        test_6_records = [(b'2L', 65, b'T', b'G', 21, 21, 52, (3, 9), True),
+                          (b'2L', 1090, b'G', b'GTTT', 17, 31.4, 43, (6, 6), 
+                           False),
+                          (b'2L', 1114, b'GCAT', b'G', 20, 37.2, 44, (6, 6), 
+                           False),
+                          (b'2L', 1160, b'C', b'T', 25, 22, 51, (9, 3), True)]
+
+        expected_vt = allel.VariantTable(test_6_records,
+                        dtype=self.dtypes, index=('CHROM', 'POS'))
+        
+        ##compare outputs
+        npt.assert_array_equal(genotypes, expected_genotypes)
+        npt.assert_array_equal(vt, expected_vt)
+        
+    def test_7(self):
+        
+        ##this tests the wild-caught workflow, retaining all variants
+        
+        genotypes, vt = indel.wild_workflow(self.name, self.path, 
+                                             self.test_cds, filter_on="all")
+        
+        expected_genotypes = allel.GenotypeArray(
+                [[[0, 0], [1, 1], [0, 1], [0, 1], [0, 1], [0, 1]],
+                 [[0, 0], [0, 1], [0, 1], [0, 0], [0, 1], [0, 0]],
+                 [[1, 1], [0, 1], [0, 1], [1, 1], [0, 1], [1, 1]],
+                 [[1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1]],
+                 [[0, 1], [0, 1], [0, 0], [0, 1], [1, 1], [0, 1]],
+                 [[0, 1], [0, 1], [0, 1], [1, 1], [0, 1], [0, 0]],
+                 [[0, 0], [1, 1], [0, 1], [0, 1], [0, 1], [0, 1]],
+                 [[0, 1], [1, 1], [0, 0], [1, 1], [1, 1], [1, 1]],
+                 [[-1, -1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1]],
+                 [[0, 0], [0, 1], [0, 0], [0, 1], [0, 0], [0, 1]]
+                 ], dtype='i1')
+
+        test_7_records = \
+        [(b'2L', 20, b'A', b'ATC', 15, 35.7, 45, (6, 6), False),
+         (b'2L', 53, b'CG', b'C', 18, 14, 45, (9, 3), False),
+         (b'2L', 65, b'T', b'G', 21, 21, 52, (3, 9), True),
+         (b'2L', 602, b'TCTCT', b'T', 27, 16, 41, (0, 12), False),
+         (b'2L', 754, b'TCTGT', b'TC', 18, 33.2, 29, (6, 6), False),
+         (b'2L', 1090, b'G', b'GTTT', 17, 31.4, 43, (6, 6), False),
+         (b'2L', 1114, b'GCAT', b'G', 20, 37.2, 44, (6, 6), False),
+         (b'2L', 1129, b'T', b'TTTT', 32, 15, 40, (3, 9), False),
+         (b'2L', 1150, b'AAA', b'A', 30, 20, 45, (0, 10), False),
+         (b'2L', 1160, b'C', b'T', 25, 22, 51, (9, 3), True)]
+
+        expected_vt = allel.VariantTable(test_7_records,
+                        dtype=self.dtypes, index=('CHROM', 'POS'))
+        
+        ##compare outputs
+        npt.assert_array_equal(genotypes, expected_genotypes)
+        npt.assert_array_equal(vt, expected_vt)
+
 
 class IntegrationTestsSex(unittest.TestCase):
 
@@ -251,7 +317,8 @@ class IntegrationTestsSex(unittest.TestCase):
         
     def test_1(self):
         
-        ##this tests the cross workflow with default quality filters, retaining indels
+        ##this tests the cross workflow with default quality filters, 
+        ##retaining indels
         
         genotypes, vt = indel.cross_workflow(self.name, self.path, 
                                              self.test_cds, sex=True,
@@ -282,7 +349,8 @@ class IntegrationTestsSex(unittest.TestCase):
         
     def test_2(self):
         
-        ##this tests the cross workflow with default quality filters, retaining SNPs
+        ##this tests the cross workflow with default quality filters, 
+        ##retaining SNPs
         
         genotypes, vt = indel.cross_workflow(self.name, self.path, 
                                              self.test_cds, filter_on="SNP",
@@ -306,7 +374,8 @@ class IntegrationTestsSex(unittest.TestCase):
 
     def test_3(self):
         
-        ##this tests the cross workflow with modified quality filters, retaining indels
+        ##this tests the cross workflow with modified quality filters, 
+        ##retaining indels
         
         genotypes, vt = indel.cross_workflow(self.name, self.path, 
                                              self.test_cds,
@@ -334,6 +403,39 @@ class IntegrationTestsSex(unittest.TestCase):
          (b'X', 1129, b'T', b'TTTT', 32, 15, 40, (5, 7), False)]
 
         expected_vt = allel.VariantTable(test_3_records,
+                        dtype=self.dtypes, index=('CHROM', 'POS'))
+
+        ##compare expected and actual outputs
+        npt.assert_array_equal(genotypes, expected_genotypes)
+        npt.assert_array_equal(vt, expected_vt)
+        
+    def test_4(self):
+        
+        ##this tests the cross workflow, retaining all variants
+        
+        genotypes, vt = indel.cross_workflow(self.name, self.path, 
+                                             self.test_cds,
+                                             filter_on="all",
+                                             sex=True, hets=self.het_phasing,
+                                             X_phasing=\
+                                             self.parents_homo_progeny)
+                
+        ##create the expected output genotypes
+        expected_genotypes = allel.GenotypeArray(
+                [[[1, 1], [0, 0], [0, 1], [1, 1], [0, 1], [1, 1]],
+                 [[0, 1], [1, 1], [0, 1], [0, 0], [1, 1], [0, 0]],
+                 [[0, 1], [1, 1], [0, 1], [1, 1], [1, 1], [0, 0]],
+                 [[0, 0], [1, 1], [0, 1], [0, 0], [0, 1], [0, 0]]
+                 ], dtype='i1')
+
+        ##create the expected output vtbl
+        test_4_records = \
+        [(b'X', 582, b'ATATA', b'A', 13, 29.2, 41, (4, 8), False),
+         (b'X', 754, b'TCTGT', b'TC', 18, 33.2, 51, (6, 6), False),
+         (b'X', 1129, b'T', b'TTTT', 32, 15, 40, (5, 7), False),
+         (b'X', 1160, b'C', b'T', 25, 22, 51, (8, 4), True)]
+
+        expected_vt = allel.VariantTable(test_4_records,
                         dtype=self.dtypes, index=('CHROM', 'POS'))
 
         ##compare expected and actual outputs

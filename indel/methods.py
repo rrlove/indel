@@ -263,7 +263,7 @@ def filter_on_type(genotypes, vt, variant_type):
     else:
 
         raise ValueError("variant_type must be 'SNP' or 'indel'" +
-                             variant_type)
+                            ": " + variant_type)
 
     vt_filtered = vt[variant_type_bool]
     genotypes_filtered = genotypes.subset(sel0 = variant_type_bool)
@@ -326,8 +326,10 @@ def wild_workflow(name, callset_path, features, filter_on="indel"):
     positions, overlapped_features = id_positions(name, vt, features)
 
     genotypes, gq, vt = extract_positions(genotypes, gq, vt, positions)
+    
+    if filter_on != "all":
         
-    genotypes, vt = filter_on_type(genotypes, vt, variant_type=filter_on)
+        genotypes, vt = filter_on_type(genotypes, vt, variant_type=filter_on)
     
     return(genotypes, vt)
 
