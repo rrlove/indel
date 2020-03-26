@@ -312,8 +312,10 @@ def cross_workflow(name, callset_path, features, filter_on="indel",
     if phased:
         
         genotypes, vt = phase_and_filter_parents(genotypes, vt)
+        
+    if filter_on != "all":
     
-    genotypes, vt = filter_on_type(genotypes, vt, variant_type=filter_on)
+        genotypes, vt = filter_on_type(genotypes, vt, variant_type=filter_on)
     
     return(genotypes, vt)
 
