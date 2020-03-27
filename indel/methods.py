@@ -11,13 +11,13 @@ class ZeroVariantError(Exception):
     pass
 
 def check_shape(genotypes, vt):
-    
+   
     if genotypes.shape[0] == 0 or vt.shape[0] == 0:
-        
+
         raise ZeroVariantError("all variants have been filtered out")
 
 def read_calls(path, name):
-    
+
     callset = h5py.File(path, mode='r')[name]
 
     genotypes = allel.GenotypeArray(callset["calldata/genotype"])
@@ -25,9 +25,9 @@ def read_calls(path, name):
     gq = callset["calldata/GQ"][:]
 
     vt = allel.VariantChunkedTable(callset["variants"])[:]
-    
+
     return(callset, genotypes, gq, vt)
-    
+
 def read_metadata(path_to_metadata, check_parental=False, sep="\t"):
 
     metadata = pd.read_csv(path_to_metadata, sep=sep)
@@ -52,7 +52,7 @@ def read_metadata(path_to_metadata, check_parental=False, sep="\t"):
     return metadata
 
 def id_positions(name, vt, feature_table):
-    
+
     try:
         all_positions = allel.SortedIndex(vt["POS"])
 
@@ -64,20 +64,20 @@ def id_positions(name, vt, feature_table):
     positions, overlapped_features = all_positions.locate_intersection_ranges(
         region_feature.start,
         region_feature.end)
-    
+
     if not np.sum(positions) > 0:
-        
+
         raise ZeroVariantError("no positions overlap")
-    
+
     return(positions, overlapped_features)
-    
+
 def extract_positions(genotypes, gq, vt, positions_bool):
 
     '''return genotypes for all exonic positions,
     associated genotype qualities, and a variant table
     of the exonic positions
     '''
-    
+
     check_shape(genotypes, vt)
 
     genotypes = genotypes.subset(sel0=positions_bool)
@@ -90,11 +90,11 @@ def extract_positions(genotypes, gq, vt, positions_bool):
 
         raise ValueError(("Genotypes, genotype qualities, and "
                           + "variant table do not have the same length"))
-        
+
     return(genotypes, gq, vt)
 ##is this really worth having as a separate function? I'll see.
-    
-def filter_quality(genotypes, gq, vt, min_gq=20, min_qd=15, min_mq=40, 
+
+def filter_quality(genotypes, gq, vt, min_gq=20, min_qd=15, min_mq=40,
                    allowed_missing=0):
 
     '''return a set of genotypes and variants where genotypes below the
@@ -133,11 +133,11 @@ def filter_quality(genotypes, gq, vt, min_gq=20, min_qd=15, min_mq=40,
     vt_qual_filtered = vt_gq_filtered[variant_qual_bool]
 
     return(genotypes_qual_filtered, vt_qual_filtered)
-    
+
 def filter_on_parents(genotypes, vt):
-    
+
     check_shape(genotypes, vt)
-    
+
     # Remove sites with missing parents
     parents_called = np.all(genotypes[:, :2].is_called(), axis=1)
 
@@ -154,8 +154,8 @@ def filter_on_parents(genotypes, vt):
     vt_filtered = vt_parents_called[segregating]
 
     return(gt_filtered, vt_filtered)
-    
-def filter_heterozygous_heterogametes(genotypes, vt, heterogametic, 
+
+def filter_heterozygous_heterogametes(genotypes, vt, heterogametic,
                                       error_tol=0):
 
     '''This method should only be run on the sex chromosome. It is part of
@@ -178,7 +178,7 @@ def filter_heterozygous_heterogametes(genotypes, vt, heterogametic,
     you should be able to check every sample on the sex chromosome,
     whether heterogametic or not.
     '''
-    
+
     check_shape(genotypes, vt)
 
     het_errors = np.sum(genotypes[:, heterogametic].is_het(), axis=1)
@@ -188,47 +188,47 @@ def filter_heterozygous_heterogametes(genotypes, vt, heterogametic,
     gt_het_error_filtered = genotypes.subset(sel0=het_errors_bool)
 
     vt_het_error_filtered = vt[het_errors_bool]
-    
+
     return(gt_het_error_filtered, vt_het_error_filtered)
-    
+
 def id_mendelian_violations(genotypes, sex=False, parents_homo_progeny=None):
-    
+
     if genotypes.shape[0] == 0:
-        
+
         raise ZeroVariantError("all variants have been filtered out")
-    
+
     if sex:
-        
+
         if parents_homo_progeny is None:
-            
+
             raise ValueError(
-                    "must pass indices of parental samples " + \
-                    "and homogametic samples")
-            
+                "must pass indices of parental samples " + \
+                "and homogametic samples")
+
         no_het_progeny = genotypes.subset(sel1=parents_homo_progeny)
-        
-        gt_violations = allel.mendel_errors(no_het_progeny[:, :2], 
+
+        gt_violations = allel.mendel_errors(no_het_progeny[:, :2],
                                             no_het_progeny[:, 2:])
-        
+
     else:
-        
+
         gt_violations = allel.mendel_errors(genotypes[:, :2], genotypes[:, 2:])
-    
+
     site_violations = np.sum(gt_violations, axis=1)
 
     return site_violations
 
-def remove_mendelian_violations(genotypes, vt, site_violations, 
+def remove_mendelian_violations(genotypes, vt, site_violations,
                                 permitted_violations=0):
 
     check_shape(genotypes, vt)
-    
+
     mendel_bool = site_violations <= permitted_violations
 
     vt_mendel_filtered = vt[mendel_bool]
 
     genotypes_mendel_filtered = genotypes.subset(sel0=mendel_bool)
-    
+
     return(genotypes_mendel_filtered, vt_mendel_filtered)
 
 def phase_and_filter_parents(genotypes, vt, window=25):
@@ -239,17 +239,17 @@ def phase_and_filter_parents(genotypes, vt, window=25):
 
     parents_phased_bool = np.sum(phased.is_phased[:, 0:2], axis=1) == 2
 
-    genotypes_phased = phased.subset(sel0 = parents_phased_bool)
+    genotypes_phased = phased.subset(sel0=parents_phased_bool)
 
     vt_phased = vt[parents_phased_bool]
 
-    ##for now, I will not handle extracting the sites that could be phased 
+    ##for now, I will not handle extracting the sites that could be phased
     ##from the unphased genotypes
-    
+
     return(genotypes_phased, vt_phased)
-    
+
 def filter_on_type(genotypes, vt, variant_type):
-    
+
     check_shape(genotypes, vt)
 
     if variant_type == "SNP":
@@ -263,85 +263,83 @@ def filter_on_type(genotypes, vt, variant_type):
     else:
 
         raise ValueError("variant_type must be 'SNP' or 'indel'" +
-                            ": " + variant_type)
+                         ": " + variant_type)
 
     vt_filtered = vt[variant_type_bool]
-    genotypes_filtered = genotypes.subset(sel0 = variant_type_bool)
-    
+    genotypes_filtered = genotypes.subset(sel0=variant_type_bool)
+
     return(genotypes_filtered, vt_filtered)
-    
-def cross_workflow(name, callset_path, features, filter_on="indel", 
+
+def cross_workflow(name, callset_path, features, filter_on="indel",
                    phased=False, sex=False,
-                   hets=None, X_phasing=None, min_gq=20, min_qd=15, min_mq=40, 
+                   hets=None, X_phasing=None, min_gq=20, min_qd=15, min_mq=40,
                    allowed_missing=0):
-    
+
     callset, genotypes, gq, vt = read_calls(callset_path, name)
-    
+
     positions, overlapped_features = id_positions(name, vt, features)
 
     genotypes, gq, vt = extract_positions(genotypes, gq, vt, positions)
-    
-    genotypes, vt = filter_quality(genotypes, gq, vt, min_gq=min_gq, 
-                                   min_qd=min_qd, min_mq=min_mq, 
+
+    genotypes, vt = filter_quality(genotypes, gq, vt, min_gq=min_gq,
+                                   min_qd=min_qd, min_mq=min_mq,
                                    allowed_missing=allowed_missing)
-    
+
     genotypes, vt = filter_on_parents(genotypes, vt)
-    
+
     if sex:
-        
+
         if hets is None:
-            
+
             raise ValueError("must pass indices of heterogametic samples")
-            
-        else:
-            
-            genotypes, vt = filter_heterozygous_heterogametes(genotypes, vt, 
+
+        genotypes, vt = filter_heterozygous_heterogametes(genotypes, vt,
                                                               hets)
-    
+
         mendelian_violations = id_mendelian_violations(genotypes, sex=True, 
                                                        parents_homo_progeny=\
                                                        X_phasing)
 
     else:
-        
+
         mendelian_violations = id_mendelian_violations(genotypes)
-        
-    genotypes, vt = remove_mendelian_violations(genotypes, vt, 
+
+    genotypes, vt = remove_mendelian_violations(genotypes, vt,
                                                 mendelian_violations)
-    
+
     if phased:
-        
+
         genotypes, vt = phase_and_filter_parents(genotypes, vt)
-        
+
     if filter_on != "all":
-    
+
         genotypes, vt = filter_on_type(genotypes, vt, variant_type=filter_on)
-    
+
     return(genotypes, vt)
 
 def wild_workflow(name, callset_path, features, filter_on="indel"):
-    
+
     callset, genotypes, gq, vt = read_calls(callset_path, name)
-    
+
     positions, overlapped_features = id_positions(name, vt, features)
 
     genotypes, gq, vt = extract_positions(genotypes, gq, vt, positions)
-    
+
     if filter_on != "all":
-        
+
         genotypes, vt = filter_on_type(genotypes, vt, variant_type=filter_on)
-    
+
     return(genotypes, vt)
 
 def transcript_workflow(chrom, name, variant_table, positions,
-                 genotypes, feature_table, feature_type):
-    
+                        genotypes, feature_table, feature_type):
+
     if feature_type == "CDS":
-        
+
         field = "Parent"
-        
+
     elif feature_type == "mRNA":
-        
+
         field = "ID"
 
     transcript = AffectedTranscript(chrom=chrom,
@@ -355,7 +353,7 @@ def transcript_workflow(chrom, name, variant_table, positions,
     transcript.positions =\
         positions.intersect_ranges(transcript.ranges[:, 0],
                                    transcript.ranges[:, 1]).values
-                                   
+
     indices =\
     np.array([positions.locate_key(key) for key in transcript.positions])
 
