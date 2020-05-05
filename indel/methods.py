@@ -20,7 +20,7 @@ def read_calls(path, name):
 
     callset = h5py.File(path, mode='r')[name]
 
-    genotypes = allel.GenotypeArray(callset["calldata/genotype"])
+    genotypes = allel.GenotypeArray(callset["calldata/GT"])
 
     gq = callset["calldata/GQ"][:]
 
